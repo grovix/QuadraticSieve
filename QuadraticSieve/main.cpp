@@ -5,17 +5,13 @@
 #include "Factorization.h"
 
 int main(){
-	int n;
-	std::cout << "Choose input" << std::endl <<
-		"1-read from file" << std::endl <<
-		"2-read from keyboard" << std::endl;
-	cin >> n;
+
 	fstream in("input.txt");
-	string num;
-	switch (n){
-	case 1:
-		in >> num;
-	}
+	std::string num;
+	in >> num;
+	Factorization comp = Factorization(num.c_str());
+
+	//comp.checkPrime();
 	system("pause");
 	return 0;
 }

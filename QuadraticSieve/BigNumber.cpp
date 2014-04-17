@@ -380,3 +380,15 @@ ostream& operator << (ostream &os, const BigNumber& a) {
 	os << s.c_str();
 	return os;
 }
+
+bool BigNumber::isPrime(int nTrials, IppBitSupplier rndFunc, void* pRndParam){
+	Ipp32u pResult;
+	IppsPrimeState* pCtx;
+	ippsPrimeInit(this->BitSize(), pCtx);
+	ippsPrimeTest_BN(BN(*this), nTrials, &pResult, pCtx, rndFunc, pRndParam);
+	delete pCtx;
+
+	if (pResult == IS_PRIME)
+		return true;
+	return false;
+}

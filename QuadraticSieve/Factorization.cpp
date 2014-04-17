@@ -1,7 +1,7 @@
 #include "Factorization.h"
 
-Factorization::Factorization(std::string& value){
-	number = BigNumber(value.c_str());
+Factorization::Factorization(const char*s){
+	number = BigNumber(s);
 }
 
 Factorization::Factorization(Ipp32u value){
@@ -9,5 +9,6 @@ Factorization::Factorization(Ipp32u value){
 }
 
 void Factorization::checkPrime(){
-
+	isPrime = number.isPrime(nTraits,rndFunc,pRndParam);
+	cout << "is prime" << isPrime << endl;
 }

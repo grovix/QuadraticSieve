@@ -136,13 +136,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BigNumber.cpp" />
+    <ClCompile Include="Factorization.cpp" />
+    <ClCompile Include="IntMatrix.cpp" />
+    <ClCompile Include="IntPolynom.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SparseMatrix.cpp" />
+    <ClCompile Include="VectorPolynom.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bignum.h" />
+    <ClInclude Include="Factorization.h" />
+    <ClInclude Include="int_matrix.h" />
+    <ClInclude Include="int_polynom.h" />
+    <ClInclude Include="polynom.h" />
+    <ClInclude Include="sparse_matrix.h" />
+    <ClInclude Include="vector_polynom.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Text.txt" />
+    <Text Include="input.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

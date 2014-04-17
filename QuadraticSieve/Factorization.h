@@ -3,10 +3,13 @@
 class Factorization{
 public:
 	Factorization(Ipp32u value);
-	Factorization(std::string& value);
+	Factorization(const char*s);
 	void checkPrime();
 private:
 	std::vector<BigNumber> factor;
 	BigNumber number;
-	bool isFactorized = false;
+	bool isPrime = false;
+	int nTraits = 6;
+	IppBitSupplier rndFunc;
+	void* pRndParam;
 };
