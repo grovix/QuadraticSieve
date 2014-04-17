@@ -9,6 +9,5 @@ Factorization::Factorization(Ipp32u value){
 }
 
 void Factorization::checkPrime(){
-	isPrime = number.isPrime(nTraits,rndFunc,pRndParam);
-	cout << "is prime" << isPrime << endl;
+	Factorization::isPrime = number.isPrime(Factorization::nTraits);
 }

@@ -11,7 +11,7 @@ int main(){
 	in >> num;
 	Factorization comp = Factorization(num.c_str());
 
-	//comp.checkPrime();
+	comp.checkPrime();
 	system("pause");
 	return 0;
 }

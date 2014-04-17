@@ -149,6 +149,7 @@
     <ClInclude Include="int_matrix.h" />
     <ClInclude Include="int_polynom.h" />
     <ClInclude Include="polynom.h" />
+    <ClInclude Include="random_generator.h" />
     <ClInclude Include="sparse_matrix.h" />
     <ClInclude Include="vector_polynom.h" />
   </ItemGroup>

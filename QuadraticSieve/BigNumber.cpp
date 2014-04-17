@@ -381,14 +381,23 @@ ostream& operator << (ostream &os, const BigNumber& a) {
 	return os;
 }
 
-bool BigNumber::isPrime(int nTrials, IppBitSupplier rndFunc, void* pRndParam){
-	Ipp32u pResult;
-	IppsPrimeState* pCtx;
-	ippsPrimeInit(this->BitSize(), pCtx);
-	ippsPrimeTest_BN(BN(*this), nTrials, &pResult, pCtx, rndFunc, pRndParam);
-	delete pCtx;
+bool BigNumber::isPrime(int nTrials){
 
-	if (pResult == IS_PRIME)
+	//define Number-bit Prime Generator
+	int ctxSize;
+	int bitSize = this->BitSize();
+	ippsPrimeGetSize(bitSize, &ctxSize);
+	IppsPrimeState* pPrimeG = (IppsPrimeState*)(new Ipp8u[ctxSize]);
+	ippsPrimeInit(bitSize, pPrimeG);
+
+	// define Pseudo Random Generator (default settings)
+	ippsPRNGGetSize(&ctxSize);
+	IppsPRNGState* pRand = (IppsPRNGState*)(new Ipp8u[ctxSize]);
+	ippsPRNGInit(bitSize, pRand);
+
+	Ipp32u result;
+	ippsPrimeTest_BN(BN(*this), nTrials, &result, pPrimeG, ippsPRNGen, pRand);
+	if (result == IPP_IS_PRIME)
 		return true;
 	return false;
 }
