@@ -8,7 +8,6 @@ using namespace std;
 class BigNumber
 {
 public:
-	friend class Bmath;
 	BigNumber(Ipp32u value = 0);
 	BigNumber(Ipp32s value);
 	BigNumber(const IppsBigNumState* pBN);
@@ -66,9 +65,11 @@ public:
 	void num2hex(string& s) const; // convert to hex string
 	void num2vec(vector<Ipp32u>& v) const; // convert to 32-bit word vector
 	friend ostream& operator << (ostream& os, const BigNumber& a);
-	//my modifivations
+	//my modifiñations
 	bool isPrime(int nTrials);
-	float ln();
+	float b_ln();
+	BigNumber b_sqrt();
+	//
 protected:
 	bool create(const Ipp32u* pData, int length, IppsBigNumSGN sgn = IppsBigNumPOS);
 	int compare(const BigNumber&) const;

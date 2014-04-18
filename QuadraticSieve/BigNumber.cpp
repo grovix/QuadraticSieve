@@ -409,7 +409,7 @@ bool BigNumber::isPrime(int nTrials){
 	return res;
 }
 
-float BigNumber::ln(){
+float BigNumber::b_ln(){
 
 	vector<Ipp32u> v;
 	if (*this < 10000){
@@ -419,7 +419,7 @@ float BigNumber::ln(){
 
 	int n = this->BitSize() - 1;
 	n /= 10;
-	n = n * 3 + 1; //грубая оценка числа десятичных разрядов
+	n = n * 3 + 1; //rough evaluation of decimal points
 	char* dTen = new char[n + 1];
 	dTen[0] = '1';
 	for (int i = 1; i < n; ++i){
@@ -427,7 +427,7 @@ float BigNumber::ln(){
 	}
 	dTen[n] = '\0';
 
-	BigNumber temp = *this/dTen; //нужно разделить чило на 10^n
+	BigNumber temp = *this/dTen;
 	int correct = 0;
 	if (temp < 10)
 		correct = 3;
@@ -438,6 +438,46 @@ float BigNumber::ln(){
 	n = n - correct;
 	dTen[n] = '\0';
 	(*this / dTen).num2vec(v);
+	delete [] dTen;
 
 	return (log((float)v[0]) + ((float)n-1)*log(10)); //log(1000) = 3*log(10)
+}
+
+BigNumber BigNumber::b_sqrt(){ //Newton's method
+
+	vector<Ipp32u> v;
+	if (*this < 10000){
+		this->num2vec(v);
+		return std::move(BigNumber((Ipp32u) sqrt((float)v[0])));
+	}
+
+	int n = this->BitSize() - 1;
+	n /= 10;
+	n = n * 3 + 1; //rough evaluation of decimal points
+	n /= 2;
+	char* dTen = new char[n + 1];
+	dTen[0] = '1';
+	for (int i = 1; i < n; ++i){
+		dTen[i] = '0';
+	}
+	dTen[n] = '\0';
+
+	BigNumber x(dTen);
+	BigNumber xn(0);
+
+	delete[] dTen;
+
+	while (true){
+		xn = (x + *this / x);
+		xn /= Two();
+		if (xn < x){
+			if (x - xn < Two())
+				break;
+		}
+		else if ((xn - x) < Two())
+			break;
+		
+		x = xn;
+	}
+	return std::move(xn);
 }

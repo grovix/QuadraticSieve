@@ -11,7 +11,7 @@ int main(){
 	in >> num;
 	Factorization comp = Factorization(num.c_str());
 	BigNumber test(num.c_str());
-	cout<<test.ln()<<endl;
+	cout << test.b_sqrt() << endl;
 	system("pause");
 	return 0;
 }
