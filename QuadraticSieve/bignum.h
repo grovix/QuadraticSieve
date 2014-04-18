@@ -24,6 +24,7 @@ public:
 	static const BigNumber& Zero();
 	static const BigNumber& One();
 	static const BigNumber& Two();
+	static const BigNumber& MinusOne();
 	// arithmetic operators probably need
 	BigNumber& operator = (const BigNumber& bn);
 	BigNumber& operator += (const BigNumber& bn);

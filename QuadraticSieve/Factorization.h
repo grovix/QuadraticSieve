@@ -1,5 +1,6 @@
 #include "bignum.h"
 #include <string>
+#include <map>
 
 class Factorization{
 public:
@@ -7,9 +8,11 @@ public:
 	Factorization(const char*s);
 	void checkPrime();
 	void init();
-	Ipp32u trialDivisionBound = 1000;
+	Ipp32u tDivBound = 1000;
+	vector<Ipp32u> tDiv;
+	std::map<BigNumber, Ipp32u> getFactor();
 private:
-	std::vector<BigNumber> factor;
+	std::map<BigNumber, Ipp32u> factor;
 	BigNumber number;
 	bool isPrime = false;
 	int nTraits = 6;

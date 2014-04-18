@@ -11,7 +11,9 @@ int main(){
 	in >> num;
 	Factorization comp = Factorization(num.c_str());
 	BigNumber test(num.c_str());
-	cout << test.b_sqrt() << endl;
+	//cout << test.isPrime(6)<< endl;
+	comp.init();
+
 	system("pause");
 	return 0;
 }

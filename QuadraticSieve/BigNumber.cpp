@@ -112,6 +112,12 @@ const BigNumber& BigNumber::Two()
 	static const BigNumber two(2);
 	return two;
 }
+
+const BigNumber& BigNumber::MinusOne()
+{
+	static const BigNumber minus_one(-1);
+	return minus_one;
+}
 // arithmetic operators
 //
 BigNumber& BigNumber::operator =(const BigNumber& bn)
