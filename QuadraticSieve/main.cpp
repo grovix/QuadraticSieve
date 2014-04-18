@@ -10,8 +10,8 @@ int main(){
 	std::string num;
 	in >> num;
 	Factorization comp = Factorization(num.c_str());
-
-	comp.checkPrime();
+	BigNumber test(num.c_str());
+	cout<<test.ln()<<endl;
 	system("pause");
 	return 0;
 }

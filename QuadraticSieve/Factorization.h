@@ -6,7 +6,7 @@ public:
 	Factorization(Ipp32u value);
 	Factorization(const char*s);
 	void checkPrime();
-
+	void init();
 	Ipp32u trialDivisionBound = 1000;
 private:
 	std::vector<BigNumber> factor;

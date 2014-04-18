@@ -66,7 +66,9 @@ public:
 	void num2hex(string& s) const; // convert to hex string
 	void num2vec(vector<Ipp32u>& v) const; // convert to 32-bit word vector
 	friend ostream& operator << (ostream& os, const BigNumber& a);
+	//my modifivations
 	bool isPrime(int nTrials);
+	float ln();
 protected:
 	bool create(const Ipp32u* pData, int length, IppsBigNumSGN sgn = IppsBigNumPOS);
 	int compare(const BigNumber&) const;

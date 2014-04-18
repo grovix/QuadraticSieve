@@ -59,9 +59,6 @@
     <ClInclude Include="int_matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="random_generator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="input.txt">

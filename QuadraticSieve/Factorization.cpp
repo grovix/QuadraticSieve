@@ -11,3 +11,4 @@ Factorization::Factorization(Ipp32u value){
 void Factorization::checkPrime(){
 	Factorization::isPrime = number.isPrime(Factorization::nTraits);
 }
+

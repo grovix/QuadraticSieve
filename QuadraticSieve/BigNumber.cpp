@@ -384,6 +384,7 @@ ostream& operator << (ostream &os, const BigNumber& a) {
 bool BigNumber::isPrime(int nTrials){
 
 	//define Number-bit Prime Generator
+	bool res;
 	int ctxSize;
 	int bitSize = this->BitSize();
 	ippsPrimeGetSize(bitSize, &ctxSize);
@@ -398,6 +399,45 @@ bool BigNumber::isPrime(int nTrials){
 	Ipp32u result;
 	ippsPrimeTest_BN(BN(*this), nTrials, &result, pPrimeG, ippsPRNGen, pRand);
 	if (result == IPP_IS_PRIME)
-		return true;
-	return false;
+		res = true;
+	else
+		res = false;
+
+	delete[](Ipp8u*)pRand;
+	delete[](Ipp8u*)pPrimeG;
+
+	return res;
+}
+
+float BigNumber::ln(){
+
+	vector<Ipp32u> v;
+	if (*this < 10000){
+		this->num2vec(v);
+		return log((float)v[0]);
+	}
+
+	int n = this->BitSize() - 1;
+	n /= 10;
+	n = n * 3 + 1; //грубая оценка числа десятичных разрядов
+	char* dTen = new char[n + 1];
+	dTen[0] = '1';
+	for (int i = 1; i < n; ++i){
+		dTen[i] = '0';
+	}
+	dTen[n] = '\0';
+
+	BigNumber temp = *this/dTen; //нужно разделить чило на 10^n
+	int correct = 0;
+	if (temp < 10)
+		correct = 3;
+	else if (temp < 100)
+		correct = 2;
+	else if (temp < 1000)
+		correct = 1;
+	n = n - correct;
+	dTen[n] = '\0';
+	(*this / dTen).num2vec(v);
+
+	return (log((float)v[0]) + ((float)n-1)*log(10)); //log(1000) = 3*log(10)
 }
