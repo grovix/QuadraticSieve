@@ -70,6 +70,7 @@ public:
 	bool isPrime(int nTrials);
 	float b_ln();
 	BigNumber b_sqrt();
+	BigNumber b_gcd(const BigNumber& a);
 	//
 protected:
 	bool create(const Ipp32u* pData, int length, IppsBigNumSGN sgn = IppsBigNumPOS);

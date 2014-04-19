@@ -487,3 +487,9 @@ BigNumber BigNumber::b_sqrt(){ //Newton's method
 	}
 	return std::move(xn);
 }
+
+BigNumber BigNumber::b_gcd(const BigNumber& a){
+	BigNumber res;
+	ippsGcd_BN(BN(*this), BN(a), BN(res));
+	return res;
+}
