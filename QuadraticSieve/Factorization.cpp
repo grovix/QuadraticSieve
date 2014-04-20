@@ -8,19 +8,17 @@ Factorization::Factorization(Ipp32u value){
 	number = BigNumber(value);
 }
 
-void Factorization::checkPrime(){
-	Factorization::isPrime = number.isPrime(Factorization::nTraits);
-	if (isPrime && number != BigNumber::One()){
-		factor.insert(std::pair<BigNumber, Ipp32u>(number, 1));
-		cout << "Factorization completed!" << endl;
-	}
-}
-
 std::map<BigNumber, Ipp32u> Factorization::getFactor(){
+	init();
 	return factor;
 }
 
 void Factorization::init(){
+	if (number.isPrime(nTraits)){
+		cout << "Input number is prime!" << endl;
+		insertDivisor(number);
+		return;
+	}
 	//sieve of Eratosphenes for trial division
 	vector<bool> arr(tDivBound + 1,true);
 	auto& a_begin = arr.begin();
@@ -41,68 +39,82 @@ void Factorization::init(){
 	}
 	for (auto& i = arr.begin() + 2; i != a_end; ++i){
 		if (*i)
-			tDiv.push_back(i - a_begin);
+			tDiv.push_back(BigNumber((Ipp32u)(i - a_begin)));
 	}
 
 	auto& f_end = factor.end();
 	for (auto&& i : tDiv){
 		while (number % i == BigNumber::Zero()){
-			auto& find = factor.find(i);
-			if (find != f_end){
-				find->second += 1;
-			}
-			else
-				factor.insert(std::pair<BigNumber, Ipp32u>(i, 1));
-			number /= i;
+			insertDivisor(BigNumber(i));
 		}
 	}
 	cout << "Trial division completed" << endl;
-
-	this->checkPrime();
-
-	if (!isPrime)
-		rho_Pollard();
+	if (!number.isPrime(nTraits))
+		rho_Pollard(number);
+	else{
+		if (number != BigNumber::One())
+			insertDivisor(number);
+	}
+	return;
 }
 
-void Factorization::rho_Pollard(){
+void Factorization::rho_Pollard(BigNumber N){
 	int size;
-	int numSize = this->number.BitSize();
-	int counter = this->pollardIter;
+	int numSize = N.BitSize();
+	auto counter = this->pollardIter;
 	ippsPRNGGetSize(&size);
 	IppsPRNGState* pPrng = (IppsPRNGState*)(new Ipp8u[size]);
 	ippsPRNGInit(160, pPrng);
 
 	BigNumber x;
 	ippsPRNGen_BN(BN(x), numSize, pPrng);
-	while (x > number)
+	while (x > N)
 		ippsPRNGen_BN(BN(x), numSize, pPrng);
 	BigNumber z(x);
 	BigNumber p;
 	bool flag = false;
 	while (!flag && counter > 0){
-		x = (x*x + BigNumber::One()) % number;
-		z = (z*z + BigNumber::One()) % number;
-		z = (z*z + BigNumber::One()) % number;
-		p = (z - x).b_gcd(number);
+		x = (x*x + BigNumber::One()) % N;
+		z = (z*z + BigNumber::One()) % N;
+		z = (z*z + BigNumber::One()) % N;
+		p = (z - x).b_gcd(N);
 		if (p > BigNumber::One())
 			flag = true;
 		--counter;
 	}
 	if (flag){
+		if (N % p != BigNumber::Zero())
+			throw("Error! Wrong rho-pollard result");
+		N /= p;
 		if (p.isPrime(nTraits)){
-			factor.insert(std::pair<BigNumber, Ipp32u>(p, 1));
-			cout << "Rho-Pollard method has found prime factor of number!" << endl;
+			insertDivisor(p);
+			cout << "Rho-Pollard method has found prime factor of " << N << endl;
 		}
 		else{
-			intermNumbers.push_back(p);
-			cout << "Rho-Pollard method has found non-prime factor of number!" << endl;
+			cout << "Rho-Pollard method has found non-prime factor of" << N << endl;
+			rho_Pollard(p);
 		}
-		number /= p;
+
+		if (N.isPrime(nTraits))
+			insertDivisor(N);
+		else
+			rho_Pollard(N);
 	}
-	else
-		cout << "Rho-Pollard method has not found any factors of number!" << endl;
+	else{
+		cout << "Rho-Pollard method has not found any factors of " << N << endl;
+		QuadraticSieve(N);
+	}
 }
 
-void Factorization::router(){
+void Factorization::insertDivisor(BigNumber& a){
+	auto& f = factor.find(a);
+	if (f != factor.end())
+		f->second = f->second + 1;
+	else
+		factor.insert(std::pair<BigNumber, Ipp32u>(a,1));
+	number /= a;
+}
 
+void Factorization::QuadraticSieve(BigNumber N){
+	return;
 }

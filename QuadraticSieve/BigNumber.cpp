@@ -400,7 +400,7 @@ bool BigNumber::isPrime(int nTrials){
 	// define Pseudo Random Generator (default settings)
 	ippsPRNGGetSize(&ctxSize);
 	IppsPRNGState* pRand = (IppsPRNGState*)(new Ipp8u[ctxSize]);
-	ippsPRNGInit(bitSize, pRand);
+	ippsPRNGInit(160, pRand);
 
 	Ipp32u result;
 	ippsPrimeTest_BN(BN(*this), nTrials, &result, pPrimeG, ippsPRNGen, pRand);
