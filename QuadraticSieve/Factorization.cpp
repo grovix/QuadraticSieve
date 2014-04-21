@@ -74,9 +74,15 @@ void Factorization::rho_Pollard(BigNumber N){
 	BigNumber p;
 	bool flag = false;
 	while (!flag && counter > 0){
-		x = (x*x + BigNumber::One()) % N;
-		z = (z*z + BigNumber::One()) % N;
-		z = (z*z + BigNumber::One()) % N;
+		x *= x;
+		x += BigNumber::One();
+		x %= N;
+		z *= z;
+		z += BigNumber::One();
+		z %= N;
+		z *= z;
+		z += BigNumber::One();
+		z %= N;
 		p = (z - x).b_gcd(N);
 		if (p > BigNumber::One())
 			flag = true;
@@ -117,4 +123,43 @@ void Factorization::insertDivisor(BigNumber& a){
 
 void Factorization::QuadraticSieve(BigNumber N){
 	return;
+}
+
+BigNumber Factorization::modPow(const BigNumber&a, const BigNumber& k, const BigNumber& n){
+	int deg = k.BitSize();
+	BigNumber b(BigNumber::One());
+	if (k == BigNumber::Zero())
+		return b;
+
+	string s;
+	k.num2hex(s);
+	Ipp32u size = 0;
+	Ipp32u pl = 3;
+	while (s[pl] == '0')
+		++pl;
+	size = s.length() - pl;
+	vector<string> bit(size);
+	for (auto& i : bit){
+		switch (s[pl]){
+		case '0': i = "0000"; break; case '4': i = "0100"; break; case '8': i = "1000"; break; case 'C': i = "1100"; break;
+		case '1': i = "0001"; break; case '5': i = "0101"; break; case '9': i = "1001"; break; case 'D': i = "1101"; break;
+		case '2': i = "0010"; break; case '6': i = "0110"; break; case 'A': i = "1010"; break; case 'E': i = "1110"; break;
+		case '3': i = "0011"; break; case '7': i = "0111"; break; case 'B': i = "1011"; break; case 'F': i = "1111"; break;
+		}
+		++pl;
+	}
+	//Now, we have all bits of k
+
+	BigNumber A(a);			
+	if (bit[size-1][3] == '1')
+		b = a;
+	for (int i = 1; i <= deg; ++i){
+		A *= A;
+		A %= n;
+		if (bit[size - 1 - i / 4][3 - i % 4] == '1'){
+			b *= A;
+			b %= n;
+		}
+	}
+	return b;
 }

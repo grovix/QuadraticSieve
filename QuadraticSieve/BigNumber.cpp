@@ -418,14 +418,15 @@ bool BigNumber::isPrime(int nTrials){
 float BigNumber::b_ln(){
 
 	vector<Ipp32u> v;
-	if (*this < 10000){
+	if (*this < 20000){
 		this->num2vec(v);
 		return log((float)v[0]);
 	}
 
 	int n = this->BitSize() - 1;
-	n /= 10;
-	n = n * 3 + 1; //rough evaluation of decimal points
+	float deg = ceilf(n / log2f(10)); //evaluation of decimal points
+	deg -= 4;
+	n = (int)deg;
 	char* dTen = new char[n + 1];
 	dTen[0] = '1';
 	for (int i = 1; i < n; ++i){
@@ -433,16 +434,6 @@ float BigNumber::b_ln(){
 	}
 	dTen[n] = '\0';
 
-	BigNumber temp = *this/dTen;
-	int correct = 0;
-	if (temp < 10)
-		correct = 3;
-	else if (temp < 100)
-		correct = 2;
-	else if (temp < 1000)
-		correct = 1;
-	n = n - correct;
-	dTen[n] = '\0';
 	(*this / dTen).num2vec(v);
 	delete [] dTen;
 
@@ -458,8 +449,9 @@ BigNumber BigNumber::b_sqrt(){ //Newton's method
 	}
 
 	int n = this->BitSize() - 1;
-	n /= 10;
-	n = n * 3 + 1; //rough evaluation of decimal points
+	float deg = ceilf(n / log2f(10)); //evaluation of decimal points
+	deg -= 4;
+	n = (int)deg;
 	n /= 2;
 	char* dTen = new char[n + 1];
 	dTen[0] = '1';
