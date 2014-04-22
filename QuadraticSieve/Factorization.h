@@ -1,4 +1,8 @@
+#if !defined _FACTORIZATION_H
+#define _FACTORIZATION_H
+
 #include "bignum.h"
+#include "QuadraticSieve.h"
 #include <string>
 #include <map>
 
@@ -9,16 +13,19 @@ public:
 	void init();
 	vector<BigNumber> tDiv;
 	std::map<BigNumber, Ipp32u> getFactor();
-	void rho_Pollard(BigNumber N);
-	void QuadraticSieve(BigNumber N);
+	void rho_Pollard(BigNumber& N);
+	void CallQuadraticSieve(BigNumber& N);
+	void insertDivisor(BigNumber& a);
+	void perfectPowerTest(BigNumber& a);
+
 	Ipp32u tDivBound = 50000;
 	Ipp32u pollardIter = 1000000;
 	int nTraits = 10;
-	void insertDivisor(BigNumber& a);
-	BigNumber modPow(const BigNumber&a, const BigNumber& k, const BigNumber& n);
 private:
 	std::map<BigNumber, Ipp32u> factor;
 	BigNumber number;
 	bool isPrime = false;
 	bool isFactoredByPollard = false;
 };
+
+#endif

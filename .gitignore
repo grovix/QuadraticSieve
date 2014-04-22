@@ -219,3 +219,11 @@ QuadraticSieve/My Advisor XE Results - QuadraticSieve/annotations.advidb
 QuadraticSieve/My Advisor XE Results - QuadraticSieve/e000/e000.advixeexp
 QuadraticSieve/My Advisor XE Results - QuadraticSieve/e000/source_cache/snippets.data
 QuadraticSieve/input.txt
+*.advisum
+*.advixe
+*.th
+*.cfg
+*.db
+*.norun
+*.trace
+*.options

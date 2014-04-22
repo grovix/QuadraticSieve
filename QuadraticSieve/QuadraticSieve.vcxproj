@@ -50,8 +50,9 @@
     <PlatformToolset>Intel C++ Compiler XE 14.0</PlatformToolset>
     <UseIntelIPP>Sequential</UseIntelIPP>
     <UseIntelTBB>true</UseIntelTBB>
-    <UseIntelMKL>Sequential</UseIntelMKL>
+    <UseIntelMKL>Parallel</UseIntelMKL>
     <UseILP64Interfaces>true</UseILP64Interfaces>
+    <InstrumentIntelTBB>true</InstrumentIntelTBB>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -120,15 +121,18 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <Parallelization>false</Parallelization>
+      <Parallelization>true</Parallelization>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <UseIntelOptimizedHeaders>true</UseIntelOptimizedHeaders>
       <Cpp0xSupport>true</Cpp0xSupport>
-      <OpenMP>GenerateSequentialCode</OpenMP>
+      <OpenMP>GenerateParallelCode</OpenMP>
       <UseProcessorExtensions>SSE41</UseProcessorExtensions>
+      <Optimization>MaxSpeedHighLevel</Optimization>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WarningLevel>Level2</WarningLevel>
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;ipps.lib;ippcp.lib;ippi.lib;ippcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -140,6 +144,7 @@
     <ClCompile Include="IntMatrix.cpp" />
     <ClCompile Include="IntPolynom.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="QuadraticSieve.cpp" />
     <ClCompile Include="SparseMatrix.cpp" />
     <ClCompile Include="VectorPolynom.cpp" />
   </ItemGroup>
@@ -149,6 +154,7 @@
     <ClInclude Include="int_matrix.h" />
     <ClInclude Include="int_polynom.h" />
     <ClInclude Include="polynom.h" />
+    <ClInclude Include="QuadraticSieve.h" />
     <ClInclude Include="sparse_matrix.h" />
     <ClInclude Include="vector_polynom.h" />
   </ItemGroup>
