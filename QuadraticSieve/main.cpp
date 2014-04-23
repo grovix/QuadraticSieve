@@ -32,7 +32,8 @@ int main(){
 	//}
 	
 	QuadraticSieve q(test);
-	q.doFactorization();
+	cout<<q.Tonelli_Shanks(test, BigNumber(65537));
+	//q.doFactorization();
 	cout << "Complete " << clock() - start << endl;
 	system("pause");
 	return 0;

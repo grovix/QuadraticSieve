@@ -71,6 +71,7 @@ public:
 	float b_ln();
 	BigNumber b_sqrt();
 	BigNumber b_gcd(const BigNumber& a);
+	BigNumber b_power(const BigNumber& e);
 	//
 protected:
 	bool create(const Ipp32u* pData, int length, IppsBigNumSGN sgn = IppsBigNumPOS);
@@ -80,3 +81,5 @@ protected:
 // convert bit size into 32-bit words
 #define BITSIZE_WORD(n) ((((n)+31)>>5))
 #endif // _BIGNUMBER_H_
+
+vector<bool> EratospheneSieve(Ipp32u bound);

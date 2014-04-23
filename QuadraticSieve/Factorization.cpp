@@ -20,23 +20,10 @@ void Factorization::init(){
 		return;
 	}
 	//sieve of Eratosphenes for trial division
-	vector<bool> arr(tDivBound + 1,true);
+
+	vector<bool> arr(EratospheneSieve(tDivBound + 1));
 	auto& a_begin = arr.begin();
 	auto& a_end = arr.end();
-	Ipp32u ind, p;
-	arr[0] = false;
-	arr[1] = false;
-	auto& bound = a_begin + sqrt(a_end - a_begin);
-	for (auto& i = arr.begin() + 2; i <= bound; ++i){
-		if (*i == true){
-			p = i - a_begin;
-			ind = p * p;
-			while (ind < (a_end - a_begin)){
-				arr[ind] = false;
-				ind += p;
-			}
-		}
-	}
 	for (auto& i = arr.begin() + 2; i != a_end; ++i){
 		if (*i)
 			tDiv.push_back(BigNumber((Ipp32u)(i - a_begin)));
@@ -128,5 +115,13 @@ void Factorization::CallQuadraticSieve(BigNumber& N){
 }
 
 void Factorization::perfectPowerTest(BigNumber& a){
+	//float a_ln = a.b_ln();
+	//Ipp32u bound = trunc(a_ln / log(2));
+	//vector<bool> arr(EratospheneSieve(bound + 1));
 
+	//vector<Ipp32u> primes;
+	//auto& a_end = arr.end();
+	//for (auto& it = arr.begin(); it != a_end; ++it){
+
+	//}
 }

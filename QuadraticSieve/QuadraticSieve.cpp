@@ -54,8 +54,9 @@ BigNumber QuadraticSieve::LegendreSymbol(BigNumber& a, BigNumber& p){
 std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	cout << "bit size of " << N << " is " << N.BitSize() << endl;
 	double nLg = N.b_ln();
-	double t1 = exp(sqrt(nLg) * sqrt(log(nLg)) * 0.5);
+	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
 	Ipp32u t = ceil(t1);
+	fbSize = t;
 	cout << "Factor base size chosen as "<<t << endl;
 
 	Ipp32u len;
@@ -67,23 +68,7 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		len = t*t;
 
 	//Sieve of Eratosphenes
-	std::vector<bool> arr(len + 1, true);
-	auto& a_begin = arr.begin();
-	auto& a_end = arr.end();
-	Ipp32u ind, p;
-	arr[0] = false;
-	arr[1] = false;
-	auto& bound = a_begin + sqrt(a_end - a_begin);
-	for (auto& i = arr.begin() + 2; i <= bound; ++i){
-		if (*i == true){
-			p = i - a_begin;
-			ind = p * p;
-			while (ind < (a_end - a_begin)){
-				arr[ind] = false;
-				ind += p;
-			}
-		}
-	}
+	std::vector<bool> arr(EratospheneSieve(len + 1));
 
 	Ipp32u counter = 1;
 	Ipp32u l = len+1;
@@ -105,5 +90,71 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	if (counter - t > 1)
 		cout << "We need more primes";
 
+
+	for (auto&& i : Base)
+		cout << i << " ";
+	cout << endl;
+
+	sieving();
+
 	return divisors;
+}
+
+std::vector<BigNumber> QuadraticSieve::sieving(){
+	BigNumber M = N.b_sqrt().b_sqrt();
+	cout << "M " << M<<endl;
+	//Now try to use single polynom
+
+}
+
+//Algorythm return x -> x^2 = a (mod p) or return false
+BigNumber QuadraticSieve::Tonelli_Shanks(BigNumber& a, BigNumber& p){
+	Ipp32u e = 0;
+	BigNumber q = p - BigNumber::One();
+	while (q.IsEven()){
+		++e;
+		q /= 2;
+	}
+	//1.Find generator
+	BigNumber n;
+	int size;
+	int numSize = 10;  //What size "n" should be?
+
+	ippsPRNGGetSize(&size);
+	IppsPRNGState* pPrng = (IppsPRNGState*)(new Ipp8u[size]);
+	ippsPRNGInit(160, pPrng);
+
+	ippsPRNGen_BN(BN(n), numSize, pPrng);
+	while (LegendreSymbol(n, p) != BigNumber::MinusOne())
+		ippsPRNGen_BN(BN(n), numSize, pPrng);
+
+	BigNumber z(modPow(n, q, p));
+	//2.Initialize
+	BigNumber two(2);
+	BigNumber t;
+	BigNumber y(z);
+	BigNumber r(e);
+	BigNumber x(modPow(a, (q - BigNumber::One()) / BigNumber::Two(), p));
+	BigNumber b(a*(x*x %p) % p);
+	x = a*x %p;
+	while (true){
+		if (b % p == BigNumber::One())
+			return x;
+		//3.Find exponent
+		BigNumber m(1);
+		while (modPow(b, two.b_power(m), p) != BigNumber::One())
+			m += 1;
+		if (m == r)
+			return BigNumber::Zero();
+		//4.Reduce exponent
+		t = modPow(y, two.b_power(r - m - BigNumber::One()), p);
+		y = t*t;
+		y %= p;
+		r = m;
+		x *= t;
+		x %= p;
+		b *= y;
+		b %= p;
+	}
+
 }

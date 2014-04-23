@@ -485,3 +485,34 @@ BigNumber BigNumber::b_gcd(const BigNumber& a){
 	ippsGcd_BN(BN(*this), BN(a), BN(res));
 	return res;
 }
+
+vector<bool> EratospheneSieve(Ipp32u bound){
+	vector<bool> arr(bound,true);
+	auto& a_begin = arr.begin();
+	auto& a_end = arr.end();
+	Ipp32u ind, p;
+	arr[0] = false;
+	arr[1] = false;
+	auto& ibound = a_begin + sqrt(a_end - a_begin);
+	for (auto& i = arr.begin() + 2; i <= ibound; ++i){
+		if (*i == true){
+			p = i - a_begin;
+			ind = p * p;
+			while (ind < (a_end - a_begin)){
+				arr[ind] = false;
+				ind += p;
+			}
+		}
+	}
+	return std::move(arr);
+}
+
+BigNumber BigNumber::b_power(const BigNumber& e){
+	BigNumber p(e);
+	BigNumber res(1);
+	while(p > BigNumber::Zero()){
+		res *= *this;
+		p -= 1;
+	}
+	return res;
+}
