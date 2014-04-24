@@ -227,3 +227,15 @@ QuadraticSieve/input.txt
 *.norun
 *.trace
 *.options
+*.xml
+*.cpid
+*.ste
+*.index
+*.inspxeasm
+*.pdr
+*.db3
+*.pdr_bak
+*.txt
+*.jit
+*.inspxe
+*.data

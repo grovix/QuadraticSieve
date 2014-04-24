@@ -57,7 +57,7 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
 	Ipp32u t = ceil(t1);
 	fbSize = t;
-	cout << "Factor base size chosen as "<<t << endl;
+	cout << "First factor base size chosen as "<<t << endl;
 
 	Ipp32u len;
 	if (N.BitSize() >= 200)
@@ -72,14 +72,14 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 
 	Ipp32u counter = 1;
 	Ipp32u l = len+1;
-	Base = vector<BigNumber>(t+1);
-	Base[0] = BigNumber::MinusOne();
+	Base.push_back(BigNumber::MinusOne());
+	Base.push_back(BigNumber::Two());
 	//This statemet are easy for parallel
-	for (Ipp32u i = 2; i != l && counter <=t; ++i){
+	for (Ipp32u i = 3; i != l && counter <=t; ++i){
 		if (arr[i]){
 			BigNumber buf(i);
 			if (LegendreSymbol(N, buf) == BigNumber::One()){      
-				Base[counter] = buf;
+				Base.push_back(buf);
 				if (counter % 100000 == 0)
 					cout << counter << endl;
 				++counter;
@@ -87,27 +87,25 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		}
 	}
 
-	if (counter - t > 1)
-		cout << "We need more primes";
-
-
-	for (auto&& i : Base)
-		cout << i << " ";
-	cout << endl;
-
+	cout << "Base size: " << Base.size() << endl;
 	sieving();
 
 	return divisors;
 }
 
 std::vector<BigNumber> QuadraticSieve::sieving(){
-	BigNumber M = N.b_sqrt().b_sqrt();
-	cout << "M " << M<<endl;
-	//Now try to use single polynom
+	BigNumber a(N.b_sqrt());
+	Ipp32u b_size = Base.size()+1;
+	M = N.b_sqrt()/4;  //Experiment with it
+	vector<Ipp32u> v;
+	M.num2vec(v);
+
+	//Initialize the sieve
+
 
 }
 
-//Algorythm return x -> x^2 = a (mod p) or return false
+//Algorithm return x -> x^2 = a (mod p) or return false
 BigNumber QuadraticSieve::Tonelli_Shanks(BigNumber& a, BigNumber& p){
 	Ipp32u e = 0;
 	BigNumber q = p - BigNumber::One();

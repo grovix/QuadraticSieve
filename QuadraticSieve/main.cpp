@@ -32,8 +32,9 @@ int main(){
 	//}
 	
 	QuadraticSieve q(test);
-	cout<<q.Tonelli_Shanks(test, BigNumber(65537));
-	//q.doFactorization();
+//	q.doFactorization();
+	std::vector<float> g;
+	cout <<  g.max_size()<< endl;
 	cout << "Complete " << clock() - start << endl;
 	system("pause");
 	return 0;
