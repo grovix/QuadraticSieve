@@ -1,7 +1,6 @@
 //////////////////////////////////////////////////
 /* Integer factorization using quadratic sieve
 *  with Intel Compiler and Intel IPP
-*  not for numbers more than 350 bit
 *
 *  Grigoriy Trofimyuk, 2014
 */////////////////////////////////////////////////
@@ -32,9 +31,7 @@ int main(){
 	//}
 	
 	QuadraticSieve q(test);
-//	q.doFactorization();
-	std::vector<float> g;
-	cout <<  g.max_size()<< endl;
+	q.doFactorization();
 	cout << "Complete " << clock() - start << endl;
 	system("pause");
 	return 0;

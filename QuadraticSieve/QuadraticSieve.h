@@ -9,14 +9,13 @@ public:
 	BigNumber LegendreSymbol(BigNumber& a, BigNumber& p);
 	QuadraticSieve(BigNumber& n);
 	std::pair<BigNumber, BigNumber> doFactorization();
-	std::vector<BigNumber> sieving();
+	vector<pair<BigNumber, vector<bool>>> sieving();
 	BigNumber Tonelli_Shanks(BigNumber& a, BigNumber& p);
 private:
 	BigNumber N;
 	std::pair<BigNumber, BigNumber> divisors;
 	std::vector<BigNumber> Base;
 	Ipp32u fbSize;
-	BigNumber M;
 };
 
 #endif

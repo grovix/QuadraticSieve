@@ -56,8 +56,9 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	double nLg = N.b_ln();
 	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
 	Ipp32u t = ceil(t1);
+	t /= 10;  //Optimize this
 	fbSize = t;
-	cout << "First factor base size chosen as "<<t << endl;
+	cout << "First factor base size chosen as "<<fbSize << endl;
 
 	Ipp32u len;
 	if (N.BitSize() >= 200)
@@ -71,11 +72,11 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	std::vector<bool> arr(EratospheneSieve(len + 1));
 
 	Ipp32u counter = 1;
-	Ipp32u l = len+1;
+	Ipp32u l = len-1;
 	Base.push_back(BigNumber::MinusOne());
 	Base.push_back(BigNumber::Two());
 	//This statemet are easy for parallel
-	for (Ipp32u i = 3; i != l && counter <=t; ++i){
+	for (Ipp32u i = 3; i != l && counter <t-1; ++i){
 		if (arr[i]){
 			BigNumber buf(i);
 			if (LegendreSymbol(N, buf) == BigNumber::One()){      
@@ -93,16 +94,44 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	return divisors;
 }
 
-std::vector<BigNumber> QuadraticSieve::sieving(){
-	BigNumber a(N.b_sqrt());
-	Ipp32u b_size = Base.size()+1;
-	M = N.b_sqrt()/4;  //Experiment with it
-	vector<Ipp32u> v;
-	M.num2vec(v);
+vector<pair<BigNumber, vector<bool>>> QuadraticSieve::sieving(){
 
-	//Initialize the sieve
+	Ipp32u decimal_size =(ceil((float)N.BitSize() / log2(10)));
+	Ipp32u M;
+	cout << "decimal length of number " << decimal_size << endl;
+	//I'll optimize it later
+	if (decimal_size <= 42)
+		M = 50000;
+	else if (decimal_size <= 50)
+		M = 100000;
+	else if (decimal_size <= 55)
+		M = 250000;
+	else if (decimal_size <= 60)
+		M = 350000;
+	else if (decimal_size <= 67)
+		M = 500000;
+	else
+		M = 1000000;
+	cout << " M " << M<<endl;
+	//fill array of log(p[i])
+	vector<float> sieve(2 * M + 1);
+	vector<float> prime_log(Base.size() - 1);
+	auto& b_end = Base.end();
+	for (auto& it = Base.begin() + 1; it != b_end; ++it){
+		Ipp32u ind = it - Base.begin()-1;
+		vector<Ipp32u> v;
+		it->num2vec(v);
+		prime_log[ind] = log(v[0]);
+	}
 
+	vector<pair<BigNumber, vector<bool>>> result;
 
+	BigNumber y;
+	for (auto&& i : Base){
+		y = Tonelli_Shanks(N, i);
+		if (y == BigNumber::Zero())
+			throw("Error number in factor base!");
+	}
 }
 
 //Algorithm return x -> x^2 = a (mod p) or return false
