@@ -96,8 +96,8 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 
 vector<pair<BigNumber, vector<bool>>> QuadraticSieve::sieving(){
 
-	Ipp32u decimal_size =(ceil((float)N.BitSize() / log2(10)));
-	Ipp32u M;
+	Ipp32u decimal_size = (ceil((float)N.BitSize() / log2(10)));
+	Ipp32s M;
 	cout << "decimal length of number " << decimal_size << endl;
 	//I'll optimize it later
 	if (decimal_size <= 42)
@@ -113,9 +113,35 @@ vector<pair<BigNumber, vector<bool>>> QuadraticSieve::sieving(){
 	else
 		M = 1000000;
 	cout << " M " << M<<endl;
+	//select k such as kN = 1 mod 8
+	BigNumber k(BigNumber::One());
+	BigNumber eight(8);
+	bool flag = false;
+	while (!flag){
+		if (k*N % eight == BigNumber::One()){
+			flag = true;
+		}
+		else
+			k += BigNumber::One();
+	}
+	//define pseudo random generator
+	int ctxSize;
+	int maxBitSize = (((k.BitSize() + N.BitSize()) / 2) - log2(M))/2;
+	ippsPrimeGetSize(maxBitSize, &ctxSize);
+	IppsPrimeState* pPrimeG = (IppsPrimeState*)(new Ipp8u[ctxSize]);
+	ippsPrimeInit(maxBitSize, pPrimeG);
+
+	ippsPRNGGetSize(&ctxSize);
+	IppsPRNGState* pRand = (IppsPRNGState*)(new Ipp8u[ctxSize]);
+	ippsPRNGInit(160, pRand);
+	srand(time(NULL));
+	ippsPRNGSetSeed(BN(BigNumber(rand())), pRand);
+
+	//from this moment i can parallel my programm later
+
 	//fill array of log(p[i])
-	vector<float> sieve(2 * M + 1);
 	vector<float> prime_log(Base.size() - 1);
+
 	auto& b_end = Base.end();
 	for (auto& it = Base.begin() + 1; it != b_end; ++it){
 		Ipp32u ind = it - Base.begin()-1;
@@ -123,15 +149,95 @@ vector<pair<BigNumber, vector<bool>>> QuadraticSieve::sieving(){
 		it->num2vec(v);
 		prime_log[ind] = log(v[0]);
 	}
-
-	vector<pair<BigNumber, vector<bool>>> result;
-
-	BigNumber y;
-	for (auto&& i : Base){
-		y = Tonelli_Shanks(N, i);
-		if (y == BigNumber::Zero())
-			throw("Error number in factor base!");
+	vector<float> sieve(2 * M + 1,0);
+	//result matrix
+	vector<pair<BigNumber, vector<bool>>> result(Base.size() + 1);
+	for (auto& i : result){
+		i.second = std::vector<bool>(Base.size() + 1);
 	}
+
+	Ipp32u counter = 0;
+	Ipp32u bound = Base.size()+1;
+	BigNumber three(3);
+	BigNumber four(4);
+	BigNumber kN(k*N);
+	BigNumber A, h0, h1, h12, tmp, h2, B,D,tmpInvA,tmpL,r1,r2;
+	while (counter < bound){
+		cout << "switch polynom" << endl;
+		//generate coefficients
+		ippsPrimeGen_BN(D, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
+		while (!(D.isPrime(nTrials) && (D % 4 == three))){
+			ippsPrimeGen_BN(D, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
+		}
+		cout << "D " << D << endl;
+		A = D*D;
+		h0 = modPow(kN, (D - three) / four, D);
+		h1 = kN*h0;
+		h12 = h1*h1;
+		tmp = (BigNumber::Two() * h1).InverseMul(D);
+		h2 = (tmp * ((kN - h12) / D)) % D;
+		B = (h1 + h2*D) % A;
+		cout << "B " << B << endl;
+		//Q(x) = ((2 * A *x + B)/2 * D)^2 mod kN
+		int prime_deg = 1; //Play with it
+		float epsilon = 2;
+		for (int l = 1; l <= prime_deg; l++){
+			for (auto& it = Base.begin() + 1; it != b_end-1; ++it){
+				tmpL = (it->b_power(l));
+				tmp = kN.b_sqrt();
+				tmpInvA = (BigNumber::Two()*A).InverseMul(tmpL);
+				r1 = (B*BigNumber::MinusOne() + tmp)*(tmpInvA) % tmpL;
+				r2 = (B*BigNumber::MinusOne() - tmp)*(tmpInvA) % tmpL;
+				Ipp32u ind = it - Base.begin() - 1;
+				vector<Ipp32u> v, v1, v2;
+				r1.num2vec(v);
+				tmpL.num2vec(v1);
+				r2.num2vec(v2);
+				Ipp32s stepR1 = v[0];
+				Ipp32u primePower = v1[0];
+				Ipp32s stepR2 = v2[0];
+				//sieveing by first root
+				while (stepR1 <= M){
+					sieve[stepR1 + M] += l*prime_log[ind];
+					stepR1 += primePower;
+				}
+				stepR1 = v[0] + M - primePower;
+				while (stepR1 >= 0){
+					sieve[stepR1] += l*prime_log[ind];
+					stepR1 -= primePower;
+				}
+				//sieving by second root
+				while (stepR2 <= M){
+					sieve[stepR2 + M] += l*prime_log[ind];
+					stepR2 += primePower;
+				}
+				stepR2 = v2[0] + M - primePower;
+				while (stepR2 >= 0){
+					sieve[stepR2] += l*prime_log[ind];
+					stepR2 -= primePower;
+				}
+			} //end for one prime from factor base
+		}//end for all degrees of primes from FB
+		float aim = N.b_ln() / 2 + log(M);
+		BigNumber R, x;
+		auto& s_end = sieve.end();
+		for (auto& it = sieve.begin(); it != s_end; ++it){
+			if (abs(*it - aim) < epsilon){
+				x = BigNumber((Ipp32u(it - sieve.begin()) - M));
+				if (x < BigNumber::Zero())
+					result[counter].second[0] = true;
+				for (auto& jt = Base.begin()+1; jt != Base.end(); ++jt){
+					Ipp32u ind = jt - Base.begin();
+					Ipp32u deg = 0;
+					while (x % *jt == BigNumber::Zero()){
+
+					}
+				}
+			}
+		}
+	}
+
+	return result;
 }
 
 //Algorithm return x -> x^2 = a (mod p) or return false
@@ -150,6 +256,8 @@ BigNumber QuadraticSieve::Tonelli_Shanks(BigNumber& a, BigNumber& p){
 	ippsPRNGGetSize(&size);
 	IppsPRNGState* pPrng = (IppsPRNGState*)(new Ipp8u[size]);
 	ippsPRNGInit(160, pPrng);
+
+	ippsPRNGSetSeed(BN(BigNumber(rand())), pPrng);
 
 	ippsPRNGen_BN(BN(n), numSize, pPrng);
 	while (LegendreSymbol(n, p) != BigNumber::MinusOne())

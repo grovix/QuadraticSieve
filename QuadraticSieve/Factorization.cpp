@@ -14,6 +14,7 @@ std::map<BigNumber, Ipp32u> Factorization::getFactor(){
 }
 
 void Factorization::init(){
+	srand(time(NULL));
 	if (number.isPrime(nTraits)){
 		cout << "Input number is prime!" << endl;
 		insertDivisor(number);
@@ -52,6 +53,8 @@ void Factorization::rho_Pollard(BigNumber& N){
 	ippsPRNGGetSize(&size);
 	IppsPRNGState* pPrng = (IppsPRNGState*)(new Ipp8u[size]);
 	ippsPRNGInit(160, pPrng);
+
+	ippsPRNGSetSeed(BN(BigNumber(rand())), pPrng);
 
 	BigNumber x;
 	ippsPRNGen_BN(BN(x), numSize, pPrng);

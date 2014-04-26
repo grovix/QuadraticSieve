@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <iterator>
+#include <time.h>
+
 using namespace std;
 class BigNumber
 {

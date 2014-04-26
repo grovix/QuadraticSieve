@@ -11,6 +11,7 @@ public:
 	std::pair<BigNumber, BigNumber> doFactorization();
 	vector<pair<BigNumber, vector<bool>>> sieving();
 	BigNumber Tonelli_Shanks(BigNumber& a, BigNumber& p);
+	int nTrials = 10;
 private:
 	BigNumber N;
 	std::pair<BigNumber, BigNumber> divisors;
