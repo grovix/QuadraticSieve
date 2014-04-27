@@ -9,7 +9,7 @@ public:
 	BigNumber LegendreSymbol(BigNumber& a, BigNumber& p);
 	QuadraticSieve(BigNumber& n);
 	std::pair<BigNumber, BigNumber> doFactorization();
-	vector<pair<BigNumber, vector<bool>>> sieving();
+	vector<pair<BigNumber, vector<Ipp32u>>> sieving();
 	BigNumber Tonelli_Shanks(BigNumber& a, BigNumber& p);
 	int nTrials = 10;
 private:
