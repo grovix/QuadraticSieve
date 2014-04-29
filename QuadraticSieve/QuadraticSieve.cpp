@@ -96,7 +96,7 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 
 vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 
-	float epsilon = 15;
+	float epsilon = 10;
 	int prime_deg = 1; //Play with it
 
 	Ipp32u decimal_size = (ceil((float)N.BitSize() / log2(10)));
@@ -164,21 +164,36 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	BigNumber four(4);
 	BigNumber kN(k*N);
 	BigNumber A, h0, h1, h12, tmp, h2, B,C,D,tmpInvA,tmpL,r1,r2;
+
+	BigNumber test;
+	test = (kN / BigNumber::Two()).b_sqrt() / M;
 	while (counter < bound){
 		vector<float> sieve(2 * M + 1, 0);
-		cout << "Switch polynomial " << endl;
+		//cout << "Switch polynomial " << endl;
 		//generate coefficients
 		ippsPrimeGen_BN(D, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
 		while (!(D.isPrime(nTrials) && (D % 4 == three))){
 			ippsPrimeGen_BN(D, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
 		}
+		cout << endl;
+		cout << "switch polynom" << endl;
+		cout << "D " << D << endl;
 		A = D*D;
+		cout << "A " << A << endl;
 		h0 = modPow(kN, (D - three) / four, D);
-		h1 = kN*h0;
-		h12 = h1*h1;
-		tmp = (BigNumber::Two() * h1).InverseMul(D);
-		h2 = (tmp * ((kN - h12) / D)) % D;
-		B = (h1 + h2*D) % A;
+		cout << "h0 " << h0 << endl;
+		h1 = kN*h0 %D;
+		cout << "h1 " << h1 << endl;
+		h12 = kN * modPow(kN, (D - BigNumber::One()) / BigNumber::Two(), D)%D;
+		tmp = (BigNumber::Two() * h1);
+		BigNumber r;
+		ippsModInv_BN(BN(tmp), BN(D), BN(r));
+		cout << "mul inv " << (tmp*r) % D << endl;
+		cout << "h0 * h1 " << h0*h1 %D<< endl;
+		h2 = (tmp * ((kN - h12) / D))%D;
+		cout << "h2 " << h2 << endl;
+		B = (h1 + h2*D) %A;
+		cout << "B " << B << endl;
 		C = (B*B - kN) / (four * A);
 		//Q(x) = ((2 * A *x + B)/2 * D)^2 mod kN
 		for (int l = 1; l <= prime_deg; l++){
@@ -221,23 +236,24 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 			} //end for one prime from factor base
 		}//end for all degrees of primes from FB
 		float aim = N.b_ln() / 2 + log(M);
-		cout << "aim " << aim << endl;
 		Ipp32u cc=0;
-		for (auto& ii : sieve){
-			if (abs(ii - aim) < epsilon)
-				++cc;
-		}
-		cout << "cc " << cc << endl;
+
 		BigNumber R, Qx;
 		auto s_end = sieve.end();
 		for (auto it = sieve.begin(); it != s_end && counter <bound; ++it){
-		//	if (abs(*it - aim) < epsilon){ 
-			if (true){
+			if (abs(*it - aim) < epsilon){ 
 				Ipp32s xg = it - sieve.begin() - M;
 				BigNumber x(xg);
-				Qx = A*x*x + B*x + C;
+				//Qx = A*x*x + 2*B*x + C;
+				//cout << "Qx " << Qx << endl;
 
-				BigNumber xt(Qx);
+				BigNumber t = (BigNumber::Two() * A * x + B) /(BigNumber::Two() * D);
+				t *= t;
+				Qx = t;
+				Qx %= kN;
+				if (Qx > kN)
+					cout << " > " << endl;
+				BigNumber xt;
 				if (Qx < BigNumber::Zero()){
 					result[counter].second[0] = 1;
 					Qx *= BigNumber::MinusOne();
@@ -247,7 +263,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 					for (auto jt = Base.begin() + 1; jt != Base.end(); ++jt){
 						Ipp32u ind = jt - Base.begin();
 						Ipp32u deg = 0;
-						//Silverman point us ti one improvement : R = x mod pi must bi equals one of two roots
+						//Silverman point us to one improvement : R = x mod pi must bi equals one of two roots
 						//I'll do it later
 						while (Qx % *jt == BigNumber::Zero()){
 							++deg;
@@ -258,6 +274,10 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 					if (Qx == BigNumber::One()){
 						result[counter].first = (BigNumber::Two() * A * x + B)/ (BigNumber::Two() *D);
 						cout << "counter ++ " <<counter<< endl;
+						cout << result[counter].first << endl;
+						for (auto&& h : result[counter].second)
+							cout << h;
+						cout << endl;
 						++counter;
 					}
 					else{
@@ -269,13 +289,6 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		}
 	}
 
-
-	for (auto& kk : result){
-		cout << kk.first << endl;
-		for (auto& kk2 : kk.second)
-			cout << kk2 <<" ";
-		cout << endl;
-	}
 	return result;
 }
 
