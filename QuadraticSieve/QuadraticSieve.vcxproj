@@ -146,7 +146,6 @@
   <ItemGroup>
     <ClCompile Include="BigNumber.cpp" />
     <ClCompile Include="Factorization.cpp" />
-    <ClCompile Include="IntMatrix.cpp" />
     <ClCompile Include="IntPolynom.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QuadraticSieve.cpp" />
@@ -156,7 +155,6 @@
   <ItemGroup>
     <ClInclude Include="bignum.h" />
     <ClInclude Include="Factorization.h" />
-    <ClInclude Include="int_matrix.h" />
     <ClInclude Include="int_polynom.h" />
     <ClInclude Include="polynom.h" />
     <ClInclude Include="QuadraticSieve.h" />

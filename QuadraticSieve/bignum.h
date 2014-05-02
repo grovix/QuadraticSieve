@@ -74,6 +74,7 @@ public:
 	BigNumber b_sqrt();
 	BigNumber b_gcd(const BigNumber& a);
 	BigNumber b_power(const BigNumber& e);
+	BigNumber b_abs();
 	//
 protected:
 	bool create(const Ipp32u* pData, int length, IppsBigNumSGN sgn = IppsBigNumPOS);

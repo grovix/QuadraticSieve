@@ -33,6 +33,8 @@ int main(){
 	QuadraticSieve q(test);
 	q.doFactorization();
 	cout << "Complete " << clock() - start << endl;
+
 	system("pause");
+
 	return 0;
 }

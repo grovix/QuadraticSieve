@@ -416,7 +416,6 @@ bool BigNumber::isPrime(int nTrials){
 }
 
 float BigNumber::b_ln(){
-
 	vector<Ipp32u> v;
 	if (*this < 20000){
 		this->num2vec(v);
@@ -515,4 +514,11 @@ BigNumber BigNumber::b_power(const BigNumber& e){
 		p -= 1;
 	}
 	return res;
+}
+
+BigNumber BigNumber::b_abs(){
+	if (*this < BigNumber::Zero())
+		return BigNumber::MinusOne()* (*this);
+	else
+		return *this;
 }
