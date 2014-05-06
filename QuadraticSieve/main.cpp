@@ -6,20 +6,30 @@
 */////////////////////////////////////////////////
 
 #include <fstream>
-#include "bignum.h"
 #include <ipp.h>
 #include <stdio.h>
 #include "Factorization.h"
 #include <time.h>
-
+vector<BigNumber> BigNumber::decPowers;
 int main(){
 
 	fstream in("input.txt");
 	std::string num;
 	in >> num;
+
+	clock_t start = clock();
+
+	//инициализируем вектор степеней десятки
 	Factorization comp = Factorization(num.c_str());
 	BigNumber test(num.c_str());
-	clock_t start = clock();
+	Ipp32u deg = ceil((test.BitSize() - 1) / log2f(10));
+	++deg;
+	BigNumber ten(10);
+	BigNumber tmp(1);
+	for (unsigned i = 0; i <= deg; ++i){
+		BigNumber::decPowers.push_back(tmp);
+		tmp *= ten;
+	}
 
 	//std::map<BigNumber, Ipp32u> factor = comp.getFactor();
 	//cout << "Factorization completed! " << endl<<"time = "<<clock() - start << endl;

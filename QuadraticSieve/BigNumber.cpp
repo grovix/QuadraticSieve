@@ -417,24 +417,17 @@ bool BigNumber::isPrime(int nTrials){
 
 float BigNumber::b_ln(){
 	vector<Ipp32u> v;
-	if (*this < 20000){
+	if (*this < 2000){
 		this->num2vec(v);
 		return log((float)v[0]);
 	}
 
 	int n = this->BitSize() - 1;
 	float deg = ceilf(n / log2f(10)); //evaluation of decimal points
-	deg -= 4;
+	deg -= 3;
 	n = (int)deg;
-	char* dTen = new char[n + 1];
-	dTen[0] = '1';
-	for (int i = 1; i < n; ++i){
-		dTen[i] = '0';
-	}
-	dTen[n] = '\0';
 
-	(*this / dTen).num2vec(v);
-	delete [] dTen;
+	(*this / decPowers[n]).num2vec(v);
 
 	return (log((float)v[0]) + ((float)n-1)*log(10)); //log(1000) = 3*log(10)
 }
@@ -452,17 +445,9 @@ BigNumber BigNumber::b_sqrt(){ //Newton's method
 	deg -= 4;
 	n = (int)deg;
 	n /= 2;
-	char* dTen = new char[n + 1];
-	dTen[0] = '1';
-	for (int i = 1; i < n; ++i){
-		dTen[i] = '0';
-	}
-	dTen[n] = '\0';
 
-	BigNumber x(dTen);
+	BigNumber x(decPowers[n]);
 	BigNumber xn(0);
-
-	delete[] dTen;
 
 	while (true){
 		xn = (x + *this / x);
@@ -485,27 +470,6 @@ BigNumber BigNumber::b_gcd(const BigNumber& a){
 	return res;
 }
 
-vector<bool> EratospheneSieve(Ipp32u bound){
-	vector<bool> arr(bound,true);
-	auto& a_begin = arr.begin();
-	auto& a_end = arr.end();
-	Ipp32u ind, p;
-	arr[0] = false;
-	arr[1] = false;
-	auto& ibound = a_begin + sqrt(a_end - a_begin);
-	for (auto& i = arr.begin() + 2; i <= ibound; ++i){
-		if (*i == true){
-			p = i - a_begin;
-			ind = p * p;
-			while (ind < (a_end - a_begin)){
-				arr[ind] = false;
-				ind += p;
-			}
-		}
-	}
-	return std::move(arr);
-}
-
 BigNumber BigNumber::b_power(const BigNumber& e){
 	BigNumber p(e);
 	BigNumber res(1);
@@ -521,4 +485,25 @@ BigNumber BigNumber::b_abs(){
 		return BigNumber::MinusOne()* (*this);
 	else
 		return *this;
+}
+
+vector<bool> EratospheneSieve(Ipp32u bound){
+	vector<bool> arr(bound, true);
+	auto a_begin = arr.begin();
+	auto a_end = arr.end();
+	Ipp32u ind, p;
+	arr[0] = false;
+	arr[1] = false;
+	auto ibound = a_begin + sqrt(a_end - a_begin);
+	for (auto i = arr.begin() + 2; i <= ibound; ++i){
+		if (*i == true){
+			p = i - a_begin;
+			ind = p * p;
+			while (ind < (a_end - a_begin)){
+				arr[ind] = false;
+				ind += p;
+			}
+		}
+	}
+	return std::move(arr);
 }

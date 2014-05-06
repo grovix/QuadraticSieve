@@ -23,14 +23,13 @@ void Factorization::init(){
 	//sieve of Eratosphenes for trial division
 
 	vector<bool> arr(EratospheneSieve(tDivBound + 1));
-	auto& a_begin = arr.begin();
-	auto& a_end = arr.end();
-	for (auto& i = arr.begin() + 2; i != a_end; ++i){
+	auto a_begin = arr.begin();
+	auto a_end = arr.end();
+	for (auto i = arr.begin() + 2; i != a_end; ++i){
 		if (*i)
 			tDiv.push_back(BigNumber((Ipp32u)(i - a_begin)));
 	}
 
-	auto& f_end = factor.end();
 	for (auto&& i : tDiv){
 		while (number % i == BigNumber::Zero()){
 			insertDivisor(BigNumber(i));
@@ -103,7 +102,7 @@ void Factorization::rho_Pollard(BigNumber& N){
 }
 
 void Factorization::insertDivisor(BigNumber& a){
-	auto& f = factor.find(a);
+	auto f = factor.find(a);
 	if (f != factor.end())
 		f->second = f->second + 1;
 	else

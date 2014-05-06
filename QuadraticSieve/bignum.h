@@ -6,6 +6,7 @@
 #include <iterator>
 #include <time.h>
 
+
 using namespace std;
 class BigNumber
 {
@@ -71,10 +72,12 @@ public:
 	//my modifiñations
 	bool isPrime(int nTrials);
 	float b_ln();
+	float b_log2();
 	BigNumber b_sqrt();
 	BigNumber b_gcd(const BigNumber& a);
 	BigNumber b_power(const BigNumber& e);
 	BigNumber b_abs();
+	static vector<BigNumber> decPowers;
 	//
 protected:
 	bool create(const Ipp32u* pData, int length, IppsBigNumSGN sgn = IppsBigNumPOS);

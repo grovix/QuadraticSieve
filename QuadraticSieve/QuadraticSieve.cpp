@@ -29,14 +29,14 @@ BigNumber QuadraticSieve::modPow(const BigNumber&a, const BigNumber& k, const Bi
 		++pl;
 	}
 	//Now, we have all bits of k
-	BigNumber A(a);
+	BigNumber F(a);
 	if (bit[size - 1][3] == '1')
 		b = a;
 	for (int i = 1; i < deg; i++){
-		A *= A;
-		A %= n;
+		F *= F;
+		F %= n;
 		if (bit[size - 1 - i / 4][3 - i % 4] == '1'){
-			b *= A;
+			b *= F;
 			b %= n;
 		}
 	}
@@ -57,7 +57,6 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
 	Ipp32u t = ceil(t1);
 	t /= 4;  //Optimize this
-	//t = 4823;
 	fbSize = t;
 
 	cout << "First factor base size chosen as "<<fbSize << endl;
@@ -91,15 +90,16 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	}
 
 	cout << "Base size: " << Base.size() << endl;
-	sieving();
+	fbSize = Base.size();
+	vector<pair<BigNumber, vector<Ipp32u>>> smooth(sieving());
+	vector<vector<bool>> exponents (fbSize);
+
 
 	return divisors;
 }
 
 vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
-	ofstream out("log.txt");
 	float epsilon = 6;
-	int prime_deg = 1; //Play with it
 
 	Ipp32u decimal_size = (ceil((float)N.BitSize() / log2(10)));
 	Ipp32u M;
@@ -119,24 +119,16 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		M = 1500000;
 
 	//experiment
-	BigNumber k = Base[Base.size() - 1];
+	BigNumber k = Base[fbSize - 1];
 	vector<Ipp32u> v;
 	k.num2vec(v);
 	M = v[0];
-	cout << v.size() << endl;
 	cout << " M " << M << endl;
-
-
-	for (auto h = Base.begin(); h != Base.end(); ++h){
-		if (*h > M){
-			cout << h - Base.begin() << endl;
-			break;
-		}
-	}
 
 	//define pseudo random generator
 	int ctxSize;
-	int maxBitSize = ((N.BitSize()) / 2) - log2(M) +1;
+	int maxBitSize = ((N.BitSize()) / 2) - log2(M)+1;
+	int saveMaxBitSize = maxBitSize;
 	ippsPrimeGetSize(maxBitSize, &ctxSize);
 	IppsPrimeState* pPrimeG = (IppsPrimeState*)(new Ipp8u[ctxSize]);
 	ippsPrimeInit(maxBitSize, pPrimeG);
@@ -160,21 +152,22 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		prime_log[ind] = log(v[0]);
 	}
 	//result matrix
-	vector<pair<BigNumber, vector<Ipp32u>>> result(Base.size() + 1);
+	vector<pair<BigNumber, vector<Ipp32u>>> result(fbSize + 1);
 	for (auto& i : result){
-		i.second = std::vector<Ipp32u>(Base.size()+1);
+		i.second = std::vector<Ipp32u>(fbSize+1);
 	}
 
 	Ipp32u counter = 0;
-	Ipp32u bound = Base.size();
+	Ipp32u bound = fbSize;
 	BigNumber three(3);
 	BigNumber four(4);
 	BigNumber  D, h2, B2, primeMod, r1, r2, A2;
 
 	BigNumber test;
 	test = (N * BigNumber::Two()).b_sqrt() / M;
-	cout << "approximate value of A " << test << endl;
+	//cout << "approximate value of A " << test << endl;
 	while (counter < bound){
+		maxBitSize = saveMaxBitSize;
 		vector<float> sieve(2 * M + 1, 0);
 		//generate coefficients
 		ippsPrimeGen_BN(A, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
@@ -198,13 +191,15 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 				counter2 = 0;
 			}
 		}
-		cout << "Switch polynom" << endl;
-		out << "Switch polynom" << endl;
-		cout << "A " << A << endl;
+		//cout << "counter = " << counter << endl;
+		//cout << "Switch polynom" << endl;
+		//cout << "A " << A << endl;
 		B = Tonelli_Shanks(N, A);
-		cout << "B " << B << endl;
+		//cout << "B " << B << endl;
+		//B += A * 10000;
 		C = (B*B - N) / A;
 		//Q(x) = Ax^2 + 2*B*x +C
+		//cout << "Q(-M) = " << Q(BigNumber(-M)) << " Q(0)= " << Q(BigNumber(0)) << " Q (M) " << Q(BigNumber(M)) << endl;
 		//пока есть поиск корней только по простому модулю
 		for (auto it = Base.begin() + 2; it != b_end-1; ++it){
 			primeMod = BigNumber(*it);
@@ -223,7 +218,6 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 			Ipp32s stepR1 = v[0];
 			Ipp32u primePower = v1[0];
 			Ipp32s stepR2 = v2[0];
-			//cout << primePower << endl;
 			if (primePower <= M){
 				//sieving by first root
 				while (stepR1 <= M){
@@ -248,12 +242,14 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 			}
 		} //end for one prime from factor base
 		auto s_end = sieve.end();
-
+		//cout << "all roots calculated"<<endl;
+		//clock_t start = clock();
 		for (auto&& it = sieve.begin(); it != sieve.end(); ++it){
 			Ipp32s x = it - sieve.begin() - M;
 			*it += Q(BigNumber(x)).b_abs().b_ln();
 		}
-		cout << "end initialize sieve" << endl;
+
+		//cout << "end initialize sieve, time = " << clock() - start << endl;
 
 		BigNumber R, Qx;
 		for (auto it = sieve.begin(); it != s_end && counter <bound; ++it){
@@ -269,13 +265,12 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 					result[counter].second[0] = 1;
 					Qx *= BigNumber::MinusOne();
 				}
-				//Qx %= N;
 				//Trial division stage
 				if (Qx > BigNumber::Zero()){
 					for (auto jt = Base.begin() + 1; jt != Base.end(); ++jt){
 						Ipp32u ind = jt - Base.begin();
 						Ipp32u deg = 0;
-						//Silverman point us to one improvement : R = x mod pi must bi equals one of two roots
+						//Silverman point us to one improvement : R = x mod pi must be equals one of two roots
 						//I'll do it later
 						while (Qx % *jt == BigNumber::Zero()){
 							++deg;
@@ -284,14 +279,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 						result[counter].second[ind] = deg;
 					}
 					if (Qx == BigNumber::One()){
-						result[counter].first = (BigNumber::Two() * A * x + B)/ (BigNumber::Two() *D);
-						cout << "counter ++ " <<counter<< endl;
-						cout << "epsilon " << *it << endl;
-						cout << xg << endl;
-						out << "counter ++ " << counter << endl;
-						out << "epsilon " << *it << endl;
-						out << xg << endl;
-						cout << result[counter].first << endl;
+						result[counter].first = (A * x + B) % N; //???
 						++counter;
 					}
 					else{
@@ -303,11 +291,11 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		}
 	}
 
-	return result;
+	return std::move(result);
 }
 
 BigNumber QuadraticSieve::Q(BigNumber& x){
-	return A*x*x + 2 * B* x + C;
+	return std::move(A*x*x + 2 * B* x + C);
 }
 
 //Algorithm return x -> x^2 = a (mod p) or return false
@@ -348,7 +336,7 @@ BigNumber QuadraticSieve::Tonelli_Shanks(BigNumber& a, BigNumber& p){
 		//3.Find exponent
 		BigNumber m(1);
 		while (modPow(b, two.b_power(m), p) != BigNumber::One())
-			m += 1;
+			m += BigNumber::One();
 		if (m == r)
 			return BigNumber::Zero();
 		//4.Reduce exponent
