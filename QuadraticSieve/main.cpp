@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include "Factorization.h"
 #include <time.h>
+#include "wiedemann.h"
+#include <array>
 vector<BigNumber> BigNumber::decPowers;
 int main(){
 
@@ -41,8 +43,16 @@ int main(){
 	//	cout << endl;
 	//}
 	
-	QuadraticSieve q(test);
-	q.doFactorization();
+	//QuadraticSieve q(test);
+	//q.doFactorization();
+
+	int n = 10000;
+	array<Ipp32u, n> h;
+
+	/*Ipp32u **h = new Ipp32u*[n];
+	for (int i = 0; i < n; i++){
+		h[i] = new Ipp32u[n];
+	}*/
 
 	cout << "Complete " << clock() - start << endl;
 	system("pause");

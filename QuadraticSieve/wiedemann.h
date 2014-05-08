@@ -6,8 +6,10 @@ class Wiedemann{
 public:
 	Wiedemann(const SparseMatrix& a);
 	vector<bool> getSolution();
+	vector<bool> getRandomVector();
+	uInt delta = 20;
 private:
-	SparseMatrix A;
+	SparseMatrix B;
 	uInt N;
 };
 

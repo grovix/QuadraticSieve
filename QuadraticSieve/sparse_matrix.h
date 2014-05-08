@@ -14,7 +14,7 @@ public:
 	vector<bool> Multiply(vector<bool> v);
 	vector<uInt> getR();
 	uInt getSize();
-	bool isZero(vector<bool> v);
+	bool isZero(const vector<bool> v);
 private:
 	uInt n;
 	std::vector<uInt> R;

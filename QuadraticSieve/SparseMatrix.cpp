@@ -22,9 +22,29 @@ uInt SparseMatrix::getSize(){
 }
 
 vector<bool> SparseMatrix::Multiply(vector<bool> v){
-
+	uInt ind = 0;
+	vector<bool> res(n,false);
+	if (isZero(v))
+		return std::move(res);
+	for (uInt i = 0; i < n; ++i){
+		uInt len = R[ind];
+		++ind;
+		bool temp = false;
+		for (uInt j = 0; j < len; ++j){
+			temp = v[R[ind]] ^ temp;
+			++ind;
+		}
+		res[i] = temp;
+	}
+	return std::move(res);
 }
 
-bool SparseMatrix::isZero(vector<bool> v){
-	
+bool SparseMatrix::isZero(const vector<bool> v){
+	bool res = true;
+	for (const auto& i : v)
+		if (i != 0){
+			res = false;
+			break;
+		}
+	return res;
 }

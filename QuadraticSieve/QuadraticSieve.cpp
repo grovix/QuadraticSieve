@@ -99,7 +99,7 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	vector<pair<BigNumber, vector<Ipp32u>>> smooth(sieving());
 
 	Wiedemann calc(SparseMatrix(getSparseMatrix(smooth),fbSize+1));
-	calc.getSolution();
+	vector<bool> w(calc.getSolution());
 
 	return divisors;
 }
