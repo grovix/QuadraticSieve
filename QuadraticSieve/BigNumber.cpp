@@ -416,20 +416,22 @@ bool BigNumber::isPrime(int nTrials){
 }
 
 float BigNumber::b_ln(){
-	vector<Ipp32u> v;
-	if (*this < 2000){
-		this->num2vec(v);
-		return log((float)v[0]);
-	}
 
-	int n = this->BitSize() - 1;
-	float deg = ceilf(n / log2f(10)); //evaluation of decimal points
-	deg -= 3;
-	n = (int)deg;
+	IppsBigNumSGN sgn;
+	int bitsize = 0;
+	Ipp32u * data = nullptr;
+	ippsRef_BN(&sgn, &bitsize, &data, BN(*this));
+	int hindex = bitsize / (8 * sizeof(Ipp32u));
+	if (hindex < 1)
+		return log(data[0]);
 
-	(*this / decPowers[n]).num2vec(v);
-
-	return (log((float)v[0]) + ((float)n-1)*log(10)); //log(1000) = 3*log(10)
+	Ipp32u h = data[hindex];
+	Ipp32u l = data[hindex - 1];
+	int hsize = 8 * sizeof(Ipp32u)* (hindex + 1) - bitsize;
+	h <<= hsize;
+	l >>= (8 * sizeof(Ipp32u)-hsize);
+	h += l;
+	return 0.693147181 * (bitsize - 8 * sizeof(Ipp32u)) + log(h);
 }
 
 BigNumber BigNumber::b_sqrt(){ //Newton's method

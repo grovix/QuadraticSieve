@@ -1,1 +1,0 @@
-#include "int_polynom.h"

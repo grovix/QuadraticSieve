@@ -146,20 +146,17 @@
   <ItemGroup>
     <ClCompile Include="BigNumber.cpp" />
     <ClCompile Include="Factorization.cpp" />
-    <ClCompile Include="IntPolynom.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QuadraticSieve.cpp" />
     <ClCompile Include="SparseMatrix.cpp" />
-    <ClCompile Include="VectorPolynom.cpp" />
+    <ClCompile Include="Wiedemann.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bignum.h" />
     <ClInclude Include="Factorization.h" />
-    <ClInclude Include="int_polynom.h" />
-    <ClInclude Include="polynom.h" />
     <ClInclude Include="QuadraticSieve.h" />
     <ClInclude Include="sparse_matrix.h" />
-    <ClInclude Include="vector_polynom.h" />
+    <ClInclude Include="wiedemann.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="input.txt" />

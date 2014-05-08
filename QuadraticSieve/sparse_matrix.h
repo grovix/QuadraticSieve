@@ -3,10 +3,21 @@
 #include <iostream>
 #include <vector>
 #include <iterator>
+typedef unsigned int uInt;
+using namespace std;
 
 class SparseMatrix{
-
-
+public:
+	SparseMatrix();
+	SparseMatrix(const SparseMatrix& m);
+	SparseMatrix(std::vector<uInt> m, uInt size);
+	vector<bool> Multiply(vector<bool> v);
+	vector<uInt> getR();
+	uInt getSize();
+	bool isZero(vector<bool> v);
+private:
+	uInt n;
+	std::vector<uInt> R;
 };
 
 #endif

@@ -101,7 +101,7 @@ void Factorization::rho_Pollard(BigNumber& N){
 	}
 }
 
-void Factorization::insertDivisor(BigNumber& a){
+void Factorization::insertDivisor(const BigNumber& a){
 	auto f = factor.find(a);
 	if (f != factor.end())
 		f->second = f->second + 1;
@@ -113,17 +113,11 @@ void Factorization::insertDivisor(BigNumber& a){
 void Factorization::CallQuadraticSieve(BigNumber& N){
 	//QuadraticSieve q(N);
 	//std::pair<BigNumber, BigNumber> res = q.doFactorization();
+	//insertDivisor(res.first);
+	//insertDivisor(res.second);
 	return;
 }
 
 void Factorization::perfectPowerTest(BigNumber& a){
-	//float a_ln = a.b_ln();
-	//Ipp32u bound = trunc(a_ln / log(2));
-	//vector<bool> arr(EratospheneSieve(bound + 1));
 
-	//vector<Ipp32u> primes;
-	//auto& a_end = arr.end();
-	//for (auto& it = arr.begin(); it != a_end; ++it){
-
-	//}
 }

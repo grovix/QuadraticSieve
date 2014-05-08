@@ -1,4 +1,5 @@
 #include "QuadraticSieve.h"
+#include "wiedemann.h"
 #include <memory>
 
 QuadraticSieve::QuadraticSieve(BigNumber& n){
@@ -43,7 +44,7 @@ BigNumber QuadraticSieve::modPow(const BigNumber&a, const BigNumber& k, const Bi
 	return b;
 }
 
-BigNumber QuadraticSieve::LegendreSymbol(BigNumber& a, BigNumber& p){
+BigNumber QuadraticSieve::LegendreSymbol(const BigNumber& a, const BigNumber& p){
 
 	BigNumber r(modPow(a, (p - BigNumber::One()) / BigNumber::Two(), p));
 	if (r > BigNumber::One())
@@ -57,6 +58,10 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
 	Ipp32u t = ceil(t1);
 	t /= 4;  //Optimize this
+	if (N.BitSize() > 150)
+		t /= 4;
+	if (N.BitSize() > 200)
+		t /= 4;
 	fbSize = t;
 
 	cout << "First factor base size chosen as "<<fbSize << endl;
@@ -92,8 +97,9 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	cout << "Base size: " << Base.size() << endl;
 	fbSize = Base.size();
 	vector<pair<BigNumber, vector<Ipp32u>>> smooth(sieving());
-	vector<vector<bool>> exponents (fbSize);
 
+	Wiedemann calc(SparseMatrix(getSparseMatrix(smooth),fbSize+1));
+	calc.getSolution();
 
 	return divisors;
 }
@@ -104,21 +110,8 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	Ipp32u decimal_size = (ceil((float)N.BitSize() / log2(10)));
 	Ipp32u M;
 	cout << "decimal length of number " << decimal_size << endl;
-	//I'll optimize it later
-	if (decimal_size <= 40)
-		M = 100000; 
-	else if (decimal_size <= 50)
-		M = 200000;
-	else if (decimal_size <= 55)
-		M = 400000;
-	else if (decimal_size <= 60)
-		M = 500000;
-	else if (decimal_size <= 67)
-		M = 700000;
-	else
-		M = 1500000;
+	//I'll optimize it
 
-	//experiment
 	BigNumber k = Base[fbSize - 1];
 	vector<Ipp32u> v;
 	k.num2vec(v);
@@ -171,25 +164,8 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		vector<float> sieve(2 * M + 1, 0);
 		//generate coefficients
 		ippsPrimeGen_BN(A, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
-		Ipp32u counter2 = 0;
 		while (!(A.isPrime(nTrials) && LegendreSymbol(N,A) == BigNumber::One())){
 			ippsPrimeGen_BN(A, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
-			counter2++;
-			if (counter2 > 10000){ //optional
-				maxBitSize += 1;
-				int ctxSize;
-				ippsPrimeGetSize(maxBitSize, &ctxSize);
-				IppsPrimeState* pPrimeG = (IppsPrimeState*)(new Ipp8u[ctxSize]);
-				ippsPrimeInit(maxBitSize, pPrimeG);
-
-				ippsPRNGGetSize(&ctxSize);
-				IppsPRNGState* pRand = (IppsPRNGState*)(new Ipp8u[ctxSize]);
-				ippsPRNGInit(160, pRand);
-				srand(time(NULL));
-				ippsPRNGSetSeed(BN(BigNumber(rand())), pRand);
-
-				counter2 = 0;
-			}
 		}
 		//cout << "counter = " << counter << endl;
 		//cout << "Switch polynom" << endl;
@@ -254,11 +230,9 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		BigNumber R, Qx;
 		for (auto it = sieve.begin(); it != s_end && counter <bound; ++it){
 			    if (abs(*it) <= epsilon){
-				//cout << "try" << endl;
 				Ipp32s xg = it - sieve.begin() - M;
 				BigNumber x(xg);
 				Qx = Q(x);
-				//cout << Qx << endl;
 
 				BigNumber xt(Qx);
 				if (Qx < BigNumber::Zero()){
@@ -276,10 +250,11 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 							++deg;
 							Qx /= *jt;
 						}
-						result[counter].second[ind] = deg;
+						result[counter].second[ind] = deg; 
 					}
 					if (Qx == BigNumber::One()){
 						result[counter].first = (A * x + B) % N; //???
+
 						++counter;
 					}
 					else{
@@ -294,12 +269,12 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	return std::move(result);
 }
 
-BigNumber QuadraticSieve::Q(BigNumber& x){
+BigNumber QuadraticSieve::Q(const BigNumber& x){
 	return std::move(A*x*x + 2 * B* x + C);
 }
 
 //Algorithm return x -> x^2 = a (mod p) or return false
-BigNumber QuadraticSieve::Tonelli_Shanks(BigNumber& a, BigNumber& p){
+BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p){
 	Ipp32u e = 0;
 	BigNumber q = p - BigNumber::One();
 	while (q.IsEven()){
@@ -350,4 +325,20 @@ BigNumber QuadraticSieve::Tonelli_Shanks(BigNumber& a, BigNumber& p){
 		b %= p;
 	}
 
+}
+
+vector<unsigned int> QuadraticSieve::getSparseMatrix(vPair v){
+	unsigned int len = v.size();
+	vector<unsigned int> r;
+	for (unsigned int i = 0; i < len; ++i){
+		r.push_back(0);
+		const auto ind = r.end() - r.begin() - 1;
+		for (unsigned int j = 0; j < len; ++j){
+			if (v[j].second[i] % 2 != 0){
+				r.push_back(j);
+				r[ind]++;
+			}
+		}
+	}
+	return std::move(r);
 }

@@ -15,7 +15,7 @@ public:
 	std::map<BigNumber, Ipp32u> getFactor();
 	void rho_Pollard(BigNumber& N);
 	void CallQuadraticSieve(BigNumber& N);
-	void insertDivisor(BigNumber& a);
+	void insertDivisor(const BigNumber& a);
 	void perfectPowerTest(BigNumber& a);
 
 	Ipp32u tDivBound = 50000;

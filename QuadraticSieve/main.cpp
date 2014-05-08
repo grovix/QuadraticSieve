@@ -19,9 +19,10 @@ int main(){
 
 	clock_t start = clock();
 
-	//инициализируем вектор степеней десятки
 	Factorization comp = Factorization(num.c_str());
 	BigNumber test(num.c_str());
+
+	//инициализируем вектор степеней десятки
 	Ipp32u deg = ceil((test.BitSize() - 1) / log2f(10));
 	++deg;
 	BigNumber ten(10);
@@ -42,9 +43,8 @@ int main(){
 	
 	QuadraticSieve q(test);
 	q.doFactorization();
+
 	cout << "Complete " << clock() - start << endl;
-
 	system("pause");
-
 	return 0;
 }

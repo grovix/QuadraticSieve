@@ -27,13 +27,10 @@
     <ClCompile Include="SparseMatrix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VectorPolynom.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IntPolynom.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="QuadraticSieve.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Wiedemann.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -44,19 +41,13 @@
     <ClInclude Include="Factorization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="polynom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vector_polynom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="int_polynom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="sparse_matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="QuadraticSieve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="wiedemann.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,17 +3,19 @@
 
 #include "bignum.h"
 #include <fstream>;
+typedef vector<pair<BigNumber, vector<Ipp32u>>> vPair;
 
 class QuadraticSieve{
 public:
 	BigNumber modPow(const BigNumber& a, const BigNumber& k, const BigNumber& n);
-	BigNumber LegendreSymbol(BigNumber& a, BigNumber& p);
+	BigNumber LegendreSymbol(const BigNumber& a, const BigNumber& p);
 	QuadraticSieve(BigNumber& n);
 	std::pair<BigNumber, BigNumber> doFactorization();
-	vector<pair<BigNumber, vector<Ipp32u>>> sieving();
-	BigNumber Tonelli_Shanks(BigNumber& a, BigNumber& p);
-	BigNumber Q(BigNumber& x);
+	vPair sieving();
+	BigNumber Tonelli_Shanks(const BigNumber& a,const BigNumber& p);
+	BigNumber Q(const BigNumber& x);
 	int nTrials = 10;
+	vector<unsigned int> getSparseMatrix(vPair v);
 private:
 	BigNumber N;
 	std::pair<BigNumber, BigNumber> divisors;
