@@ -10,11 +10,11 @@ class SparseMatrix{
 public:
 	SparseMatrix();
 	SparseMatrix(const SparseMatrix& m);
-	SparseMatrix(std::vector<uInt> m, uInt size);
-	vector<bool> Multiply(vector<bool> v);
+	SparseMatrix(std::vector<uInt>& m, uInt size);
+	vector<bool> Multiply(vector<bool>& v);
 	vector<uInt> getR();
 	uInt getSize();
-	bool isZero(const vector<bool> v);
+	bool isZero(const vector<bool>& v);
 private:
 	uInt n;
 	std::vector<uInt> R;

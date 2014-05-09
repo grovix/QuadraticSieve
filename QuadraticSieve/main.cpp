@@ -42,17 +42,9 @@ int main(){
 	//		cout << "^" << i.second;
 	//	cout << endl;
 	//}
-	
-	//QuadraticSieve q(test);
-	//q.doFactorization();
 
-	int n = 10000;
-	array<Ipp32u, n> h;
-
-	/*Ipp32u **h = new Ipp32u*[n];
-	for (int i = 0; i < n; i++){
-		h[i] = new Ipp32u[n];
-	}*/
+	QuadraticSieve q(test);
+	q.doFactorization();
 
 	cout << "Complete " << clock() - start << endl;
 	system("pause");

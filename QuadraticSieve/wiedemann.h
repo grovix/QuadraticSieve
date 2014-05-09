@@ -7,10 +7,13 @@ public:
 	Wiedemann(const SparseMatrix& a);
 	vector<bool> getSolution();
 	vector<bool> getRandomVector();
-	uInt delta = 20;
+	uInt delta = 5;
+	bool vecMultiply(vector<bool>& a, vector<bool>& b);
+	vector<bool> vecSum(vector<bool>& a, vector<bool>& b);
+	vector<bool> Berlekamp_Massey(vector<bool>& a);
 private:
-	SparseMatrix B;
 	uInt N;
+	SparseMatrix B;
 };
 
 #endif

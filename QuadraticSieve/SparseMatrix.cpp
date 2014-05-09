@@ -8,7 +8,7 @@ SparseMatrix::SparseMatrix(const SparseMatrix& m){
 	n = m.n;
 }
 
-SparseMatrix::SparseMatrix(std::vector<uInt> m, uInt size){
+SparseMatrix::SparseMatrix(std::vector<uInt>& m, uInt size){
 	R = m;
 	n = size;
 }
@@ -21,7 +21,7 @@ uInt SparseMatrix::getSize(){
 	return n;
 }
 
-vector<bool> SparseMatrix::Multiply(vector<bool> v){
+vector<bool> SparseMatrix::Multiply(vector<bool>& v){
 	uInt ind = 0;
 	vector<bool> res(n,false);
 	if (isZero(v))
@@ -39,7 +39,7 @@ vector<bool> SparseMatrix::Multiply(vector<bool> v){
 	return std::move(res);
 }
 
-bool SparseMatrix::isZero(const vector<bool> v){
+bool SparseMatrix::isZero(const vector<bool>& v){
 	bool res = true;
 	for (const auto& i : v)
 		if (i != 0){

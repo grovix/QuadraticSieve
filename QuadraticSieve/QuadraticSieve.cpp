@@ -229,7 +229,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 
 		BigNumber R, Qx;
 		for (auto it = sieve.begin(); it != s_end && counter <bound; ++it){
-			    if (abs(*it) <= epsilon){
+			if (abs(*it) <= epsilon){
 				Ipp32s xg = it - sieve.begin() - M;
 				BigNumber x(xg);
 				Qx = Q(x);
@@ -250,11 +250,10 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 							++deg;
 							Qx /= *jt;
 						}
-						result[counter].second[ind] = deg; 
+						result[counter].second[ind] = deg;
 					}
 					if (Qx == BigNumber::One()){
 						result[counter].first = (A * x + B) % N; //???
-
 						++counter;
 					}
 					else{
@@ -327,7 +326,7 @@ BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p){
 
 }
 
-vector<unsigned int> QuadraticSieve::getSparseMatrix(vPair v){
+vector<unsigned int> QuadraticSieve::getSparseMatrix(vPair& v){
 	unsigned int len = v.size();
 	vector<unsigned int> r;
 	for (unsigned int i = 0; i < len; ++i){

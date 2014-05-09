@@ -15,7 +15,7 @@ public:
 	BigNumber Tonelli_Shanks(const BigNumber& a,const BigNumber& p);
 	BigNumber Q(const BigNumber& x);
 	int nTrials = 10;
-	vector<unsigned int> getSparseMatrix(vPair v);
+	vector<unsigned int> getSparseMatrix(vPair& v);
 private:
 	BigNumber N;
 	std::pair<BigNumber, BigNumber> divisors;
