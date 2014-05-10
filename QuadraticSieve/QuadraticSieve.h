@@ -18,7 +18,6 @@ public:
 	vector<unsigned int> getSparseMatrix(vPair& v);
 private:
 	BigNumber N;
-	std::pair<BigNumber, BigNumber> divisors;
 	std::vector<BigNumber> Base;
 	Ipp32u fbSize;
 	BigNumber A, B, C;

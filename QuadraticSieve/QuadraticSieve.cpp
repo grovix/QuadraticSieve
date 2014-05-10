@@ -53,6 +53,8 @@ BigNumber QuadraticSieve::LegendreSymbol(const BigNumber& a, const BigNumber& p)
 }
 
 std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
+
+	std::pair<BigNumber, BigNumber> divisors;
 	cout << "bit size of " << N << " is " << N.BitSize() << endl;
 	double nLg = N.b_ln();
 	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
@@ -98,9 +100,55 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	fbSize = Base.size();
 	vector<pair<BigNumber, vector<Ipp32u>>> smooth(sieving());
 
-	Wiedemann calc(SparseMatrix(getSparseMatrix(smooth),fbSize+1));
-	vector<bool> w(calc.getSolution());
+	cout << "Sieving stage completed" << endl;
+	SparseMatrix SM(getSparseMatrix(smooth), fbSize + 1);
+	Wiedemann calc(SM);
 
+	vector<bool> w(calc.getSolution());
+	while (SM.isZero(w))
+		w = calc.getSolution();
+
+	bool isCompleted = false;
+	while (!isCompleted){
+		BigNumber x(1);
+		for (uInt i = 0; i < fbSize + 1; ++i){
+			if (w[i]){
+				x *= smooth[i].first;
+				//x %= N;
+			}
+		}
+		x %= N;
+		cout <<"x "<< x << endl;
+		BigNumber y(1);
+		vector<Ipp32u> L(fbSize,0);
+		for (Ipp32u j = 0; j < fbSize; ++j){
+			for (Ipp32u i = 0; i < fbSize + 1; ++i){
+				if (w[i])
+					L[j] += smooth[i].second[j];
+			}
+			if ((L[j] % 2) != 0)
+				cout << "Error in L " << endl;
+			L[j] /= 2;	
+		}
+		for (int j = 0; j < fbSize; ++j){
+			y *= Base[j].b_power(L[j]);
+		}
+		y %= N;
+		BigNumber d(N);
+		IppStatus f1 = ippsGcd_BN(BN(x-y), BN(N), BN(d));
+		cout << "f1 " << f1 << endl;
+		if (d != N && d != BigNumber::One() && d != BigNumber::Zero()){
+			cout << "Completed !!! " << endl;
+			cout << d << endl;
+			isCompleted = true;
+		}
+		else{
+			cout << "d " << d << endl;
+			w = calc.getSolution();
+			while (SM.isZero(w))
+				w = calc.getSolution();
+		}
+	}
 	return divisors;
 }
 
@@ -121,7 +169,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	//define pseudo random generator
 	int ctxSize;
 	int maxBitSize = ((N.BitSize()) / 2) - log2(M)+1;
-	int saveMaxBitSize = maxBitSize;
+	maxBitSize /= 2;
 	ippsPrimeGetSize(maxBitSize, &ctxSize);
 	IppsPrimeState* pPrimeG = (IppsPrimeState*)(new Ipp8u[ctxSize]);
 	ippsPrimeInit(maxBitSize, pPrimeG);
@@ -151,41 +199,48 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	}
 
 	Ipp32u counter = 0;
-	Ipp32u bound = fbSize;
+	Ipp32u bound = fbSize+1;
 	BigNumber three(3);
 	BigNumber four(4);
 	BigNumber  D, h2, B2, primeMod, r1, r2, A2;
 
 	BigNumber test;
-	test = (N * BigNumber::Two()).b_sqrt() / M;
-	//cout << "approximate value of A " << test << endl;
+	BigNumber q;
 	while (counter < bound){
-		maxBitSize = saveMaxBitSize;
 		vector<float> sieve(2 * M + 1, 0);
 		//generate coefficients
-		ippsPrimeGen_BN(A, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
-		while (!(A.isPrime(nTrials) && LegendreSymbol(N,A) == BigNumber::One())){
-			ippsPrimeGen_BN(A, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
+		ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
+		while (!(q.isPrime(nTrials) && LegendreSymbol(N,q) == BigNumber::One())){
+			ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
 		}
-		//cout << "counter = " << counter << endl;
+		cout << "counter = " << counter << endl;
 		//cout << "Switch polynom" << endl;
-		//cout << "A " << A << endl;
-		B = Tonelli_Shanks(N, A);
-		//cout << "B " << B << endl;
-		//B += A * 10000;
+		A = q*q;
+		cout << "A " << A << endl;
+
+		//now use HenselТs Lemma
+		BigNumber B1 = Tonelli_Shanks(N, q);
+		cout << "check B1 " << B1*B1 %q << " " << N % q << endl;
+		BigNumber invF(q);
+		ippsModInv_BN(BN(BigNumber::Two()*B1 %q), BN(q), BN(invF));
+		cout << "check f' " << invF * BigNumber::Two()*B1 % q << endl;
+		BigNumber t = ((N - B1*B1) / q)*invF % q;
+		B = (B1 + q*t) % A;
+		cout << "check B " << B*B % A << " " << N % A << endl;
 		C = (B*B - N) / A;
+		BigNumber Q1(N);
+		IppStatus f = ippsModInv_BN(BN(q), BN(N), BN(Q1));
 		//Q(x) = Ax^2 + 2*B*x +C
-		//cout << "Q(-M) = " << Q(BigNumber(-M)) << " Q(0)= " << Q(BigNumber(0)) << " Q (M) " << Q(BigNumber(M)) << endl;
 		//пока есть поиск корней только по простому модулю
-		for (auto it = Base.begin() + 2; it != b_end-1; ++it){
+		for (auto it = Base.begin() + 2; it != b_end ; ++it){
 			primeMod = BigNumber(*it);
 			A2 = BigNumber::Two()*A;
-			//cout << "primeModDeg " << primeModDeg << endl;
-			BigNumber InvA;
+			BigNumber InvA(primeMod);
 			ippsModInv_BN(BN(A2 % primeMod), BN(primeMod), BN(InvA));
-			D = Tonelli_Shanks((B*B - A*C), primeMod);
+			D = Tonelli_Shanks(N, primeMod);
 			r1 = InvA*(BigNumber::MinusOne()*BigNumber::Two()*B + BigNumber::Two()*D) % primeMod;
 			r2 = InvA*(BigNumber::MinusOne()*BigNumber::Two()*B - BigNumber::Two()*D) % primeMod;
+
 			Ipp32u ind = it - Base.begin() - 1;
 			vector<Ipp32u> v, v1, v2;
 			r1.num2vec(v);
@@ -253,7 +308,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 						result[counter].second[ind] = deg;
 					}
 					if (Qx == BigNumber::One()){
-						result[counter].first = (A * x + B) % N; //???
+						result[counter].first = (A*x + B) * Q1; //???
 						++counter;
 					}
 					else{
