@@ -111,10 +111,17 @@ void Factorization::insertDivisor(const BigNumber& a){
 }
 
 void Factorization::CallQuadraticSieve(BigNumber& N){
-	//QuadraticSieve q(N);
-	//std::pair<BigNumber, BigNumber> res = q.doFactorization();
-	//insertDivisor(res.first);
-	//insertDivisor(res.second);
+	QuadraticSieve q(N);
+	std::pair<BigNumber, BigNumber> res = q.doFactorization();
+	if (res.first.isPrime(nTraits))
+		insertDivisor(res.first);
+	else
+		rho_Pollard(res.first);
+
+	if (res.second.isPrime(nTraits))
+		insertDivisor(res.second);
+	else
+		rho_Pollard(res.second);
 	return;
 }
 

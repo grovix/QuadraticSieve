@@ -19,7 +19,7 @@ public:
 	void perfectPowerTest(BigNumber& a);
 
 	Ipp32u tDivBound = 50000;
-	Ipp32u pollardIter = 1000000;
+	Ipp32u pollardIter = 100000;
 	int nTraits = 10;
 private:
 	std::map<BigNumber, Ipp32u> factor;

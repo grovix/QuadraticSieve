@@ -59,7 +59,7 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	double nLg = N.b_ln();
 	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
 	Ipp32u t = ceil(t1);
-	t /= 4;  //Optimize this
+	t /= 2;  //Optimize this
 	if (N.BitSize() > 150)
 		t /= 4;
 	if (N.BitSize() > 200)
@@ -114,11 +114,9 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		for (uInt i = 0; i < fbSize + 1; ++i){
 			if (w[i]){
 				x *= smooth[i].first;
-				//x %= N;
 			}
 		}
 		x %= N;
-		cout <<"x "<< x << endl;
 		BigNumber y(1);
 		vector<Ipp32u> L(fbSize,0);
 		for (Ipp32u j = 0; j < fbSize; ++j){
@@ -126,8 +124,6 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 				if (w[i])
 					L[j] += smooth[i].second[j];
 			}
-			if ((L[j] % 2) != 0)
-				cout << "Error in L " << endl;
 			L[j] /= 2;	
 		}
 		for (int j = 0; j < fbSize; ++j){
@@ -135,15 +131,26 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		}
 		y %= N;
 		BigNumber d(N);
-		IppStatus f1 = ippsGcd_BN(BN(x-y), BN(N), BN(d));
-		cout << "f1 " << f1 << endl;
-		if (d != N && d != BigNumber::One() && d != BigNumber::Zero()){
-			cout << "Completed !!! " << endl;
-			cout << d << endl;
-			isCompleted = true;
+		if (x != y){
+			IppStatus f1 = ippsGcd_BN(BN(x - y), BN(N), BN(d));
+			cout << "f1 " << f1 << endl;
+			if (d != N && d != BigNumber::One() && d != BigNumber::Zero()){
+				cout << "Completed !!! " << endl;
+				cout << d << endl;
+				cout << N / d << endl;
+				cout << (N % d) << endl;
+				isCompleted = true;
+				divisors.first = d;
+				divisors.second = (N / d);
+			}
+			else{
+				cout << "d " << d << endl;
+				w = calc.getSolution();
+				while (SM.isZero(w))
+					w = calc.getSolution();
+			}
 		}
 		else{
-			cout << "d " << d << endl;
 			w = calc.getSolution();
 			while (SM.isZero(w))
 				w = calc.getSolution();
@@ -180,8 +187,6 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	srand(time(NULL));
 	ippsPRNGSetSeed(BN(BigNumber(rand())), pRand);
 
-	//from this moment i can parallel my programm later
-
 	//fill array of log(p[i])
 	vector<float> prime_log(Base.size() - 1);
 
@@ -216,17 +221,15 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		cout << "counter = " << counter << endl;
 		//cout << "Switch polynom" << endl;
 		A = q*q;
-		cout << "A " << A << endl;
 
 		//now use Hensel’s Lemma
 		BigNumber B1 = Tonelli_Shanks(N, q);
-		cout << "check B1 " << B1*B1 %q << " " << N % q << endl;
+		//cout << "check B1 " << B1*B1 %q << " " << N % q << endl;
 		BigNumber invF(q);
 		ippsModInv_BN(BN(BigNumber::Two()*B1 %q), BN(q), BN(invF));
-		cout << "check f' " << invF * BigNumber::Two()*B1 % q << endl;
+		//cout << "check f' " << invF * BigNumber::Two()*B1 % q << endl;
 		BigNumber t = ((N - B1*B1) / q)*invF % q;
 		B = (B1 + q*t) % A;
-		cout << "check B " << B*B % A << " " << N % A << endl;
 		C = (B*B - N) / A;
 		BigNumber Q1(N);
 		IppStatus f = ippsModInv_BN(BN(q), BN(N), BN(Q1));
@@ -285,6 +288,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		BigNumber R, Qx;
 		for (auto it = sieve.begin(); it != s_end && counter <bound; ++it){
 			if (abs(*it) <= epsilon){
+			//if (true){
 				Ipp32s xg = it - sieve.begin() - M;
 				BigNumber x(xg);
 				Qx = Q(x);
