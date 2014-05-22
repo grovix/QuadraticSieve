@@ -229,6 +229,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		invF=q;
 		ippsModInv_BN(BN(BigNumber::Two()*B1 %q), BN(q), BN(invF));
 		t = ((N - B1*B1) / q)*invF % q;
+
 		B = (B1 + q*t) % A;
 		C = (B*B - N) / A;
 		Q1= N;

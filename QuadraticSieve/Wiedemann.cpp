@@ -1,9 +1,16 @@
 #include "wiedemann.h"
 #include "bignum.h"
+BigNumber t;
+IppsPRNGState* pPrng = nullptr;
 
 Wiedemann::Wiedemann(const SparseMatrix& a){
 	B = a;
 	N = B.getSize();
+	int size;
+	//// define Pseudo Random Generator (default settings)
+	ippsPRNGGetSize(&size);
+	pPrng = (IppsPRNGState*)(new Ipp8u[size]);
+	ippsPRNGInit(160, pPrng);
 }
 
 vector<bool> Wiedemann::getSolution(){
@@ -60,23 +67,13 @@ vector<bool> Wiedemann::getSolution(){
 
 vector<bool> Wiedemann::getRandomVector(){
 
-	//BigNumber t;
-
-	//int size;
-	//// define Pseudo Random Generator (default settings)
-	//ippsPRNGGetSize(&size);
-	//IppsPRNGState* pPrng = (IppsPRNGState*)(new Ipp8u[size]);
-	//ippsPRNGInit(160, pPrng);
-	//// define 256-bits Big Numbers X and Y
-	//const int bnBitSize = 1;
-
 	vector<bool> v(N);
 	for (auto && i : v){
-		//ippsPRNGen_BN(BN(t), bnBitSize, pPrng);
-		//vector<Ipp32u> g;
-		//t.num2vec(g);
-		//i = (bool)g[0]; 
-		i = rand() % 2; //Mother of Random !!!
+		ippsPRNGen_BN(BN(t), bnBitSize, pPrng);
+		vector<Ipp32u> g;
+		t.num2vec(g);
+		i = (bool)g[0]; 
+		//i = rand() % 2; //Mother of Random !!!
 	}
 	return std::move(v);
 }
