@@ -59,11 +59,12 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	double nLg = N.b_ln();
 	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
 	Ipp32u t = ceil(t1);
-	t /= 4;  //Optimize this
+	t /= 8;  //Optimize this
 	if (N.BitSize() > 150)
 		t /= 4;
 	if (N.BitSize() > 200)
 		t /= 4;
+
 	fbSize = t;
 
 	cout << "First factor base size chosen as "<<fbSize << endl;
@@ -126,8 +127,6 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 				if (w[i])
 					L[j] += smooth[i].second[j];
 			}
-			if ((L[j] % 2) != 0)
-				cout << "Error in L " << endl;
 			L[j] /= 2;	
 		}
 		for (int j = 0; j < fbSize; ++j){
@@ -140,6 +139,8 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		if (d != N && d != BigNumber::One() && d != BigNumber::Zero()){
 			cout << "Completed !!! " << endl;
 			cout << d << endl;
+			cout << "check " << N % d << endl;
+			cout << N / d << endl;
 			isCompleted = true;
 		}
 		else{
@@ -164,6 +165,8 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	vector<Ipp32u> v;
 	k.num2vec(v);
 	M = v[0];
+	M *= 3;
+	M /= 2;
 	cout << " M " << M << endl;
 
 	//define pseudo random generator
