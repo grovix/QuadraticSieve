@@ -3,6 +3,7 @@
 
 #include "bignum.h"
 #include <fstream>;
+#include <omp.h>
 typedef vector<pair<BigNumber, vector<Ipp32u>>> vPair;
 
 class QuadraticSieve{

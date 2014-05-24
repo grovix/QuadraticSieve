@@ -275,7 +275,8 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		} //end for one prime from factor base
 		//cout << "all roots calculated"<<endl;
 		//clock_t start = clock();
-		for (Ipp32s i = 0; i <2*M+1; ++i){
+#pragma omp parallel for
+		for (Ipp32s i = 0; i < 2 * M + 1; ++i){
 			Ipp32s x = i - M;
 			sieve[i] += Q(BigNumber(x)).b_abs().b_ln();
 		}
