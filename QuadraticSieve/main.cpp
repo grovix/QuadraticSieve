@@ -34,8 +34,8 @@ int main(){
 		tmp *= ten;
 	}
 
-	//std::map<BigNumber, Ipp32u> factor = comp.getFactor();
-	//cout << "Factorization completed! " << endl<<"time = "<<clock() - start << endl;
+	std::map<BigNumber, Ipp32u> factor = comp.getFactor();
+	cout << "Factorization completed! " << endl<<"time = "<<clock() - start << endl;
 	//for (auto& i : factor){
 	//	cout << i.first;
 	//	if (i.second > 1)
@@ -43,8 +43,8 @@ int main(){
 	//	cout << endl;
 	//}
 
-	QuadraticSieve q(test);
-	q.doFactorization();
+	//QuadraticSieve q(test);
+	//q.doFactorization();
 
 	cout << "Complete " << clock() - start << endl;
 	system("pause");

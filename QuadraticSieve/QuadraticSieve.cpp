@@ -129,7 +129,7 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 			}
 			L[j] /= 2;	
 		}
-		for (int j = 0; j < fbSize; ++j){
+		for (Ipp32u j = 0; j < fbSize; ++j){
 			y *= Base[j].b_power(L[j]);
 		}
 		y %= N;
@@ -138,10 +138,9 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		cout << "f1 " << f1 << endl;
 		if (d != N && d != BigNumber::One() && d != BigNumber::Zero()){
 			cout << "Completed !!! " << endl;
-			cout << d << endl;
-			cout << "check " << N % d << endl;
-			cout << N / d << endl;
 			isCompleted = true;
+			divisors.first = d;
+			divisors.second = N / d;
 		}
 		else{
 			cout << "d " << d << endl;
@@ -157,7 +156,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	float epsilon = 6;
 
 	Ipp32u decimal_size = (ceil((float)N.BitSize() / log2(10)));
-	Ipp32u M;
+	Ipp32s M;
 	cout << "decimal length of number " << decimal_size << endl;
 	//I'll optimize it
 
@@ -209,8 +208,10 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 
 	BigNumber test;
 	BigNumber q;
+	float* sieve = new float[2 * M + 1];
+	for (int i = 0; i < 2 * M + 1; ++i)
+		sieve[i] = 0;
 	while (counter < bound){
-		vector<float> sieve(2 * M + 1, 0);
 		//generate coefficients
 		ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
 		while (!(q.isPrime(nTrials) && LegendreSymbol(N,q) == BigNumber::One())){
@@ -229,7 +230,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		B = (B1 + q*t) % A;
 		C = (B*B - N) / A;
 		BigNumber Q1(N);
-		IppStatus f = ippsModInv_BN(BN(q), BN(N), BN(Q1));
+		ippsModInv_BN(BN(q), BN(N), BN(Q1));
 		//Q(x) = Ax^2 + 2*B*x +C
 		//пока есть поиск корней только по простому модулю
 		for (auto it = Base.begin() + 2; it != b_end ; ++it){
@@ -247,7 +248,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 			primeMod.num2vec(v1);
 			r2.num2vec(v2);
 			Ipp32s stepR1 = v[0];
-			Ipp32u primePower = v1[0];
+			Ipp32s primePower = v1[0];
 			Ipp32s stepR2 = v2[0];
 			if (primePower <= M){
 				//sieving by first root
@@ -272,20 +273,17 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 				}
 			}
 		} //end for one prime from factor base
-		auto s_end = sieve.end();
 		//cout << "all roots calculated"<<endl;
 		//clock_t start = clock();
-		for (auto&& it = sieve.begin(); it != sieve.end(); ++it){
-			Ipp32s x = it - sieve.begin() - M;
-			*it += Q(BigNumber(x)).b_abs().b_ln();
+		for (Ipp32s i = 0; i <2*M+1; ++i){
+			Ipp32s x = i - M;
+			sieve[i] += Q(BigNumber(x)).b_abs().b_ln();
 		}
-
-		//cout << "end initialize sieve, time = " << clock() - start << endl;
-
+		
 		BigNumber R, Qx;
-		for (auto it = sieve.begin(); it != s_end && counter <bound; ++it){
-			if (abs(*it) <= epsilon){
-				Ipp32s xg = it - sieve.begin() - M;
+		for (Ipp32s i = 0; i <2 * M + 1 & counter < bound; ++i){
+			if (sieve[i] <= epsilon){
+				Ipp32s xg = i - M;
 				BigNumber x(xg);
 				Qx = Q(x);
 
@@ -318,8 +316,9 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 				}
 			}
 		}
+		for (int i = 0; i < 2 * M + 1; ++i)
+			sieve[i] = 0;
 	}
-
 	return std::move(result);
 }
 

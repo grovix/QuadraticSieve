@@ -111,6 +111,7 @@ void Factorization::insertDivisor(const BigNumber& a){
 }
 
 void Factorization::CallQuadraticSieve(BigNumber& N){
+	cout << "QS factor "<< N << endl;
 	QuadraticSieve q(N);
 	std::pair<BigNumber, BigNumber> res = q.doFactorization();
 	if (res.first.isPrime(nTraits))
