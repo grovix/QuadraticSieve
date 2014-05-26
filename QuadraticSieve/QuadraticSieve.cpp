@@ -60,10 +60,6 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
 	Ipp32u t = ceil(t1);
 	t /= 8;  //Optimize this
-	if (N.BitSize() > 150)
-		t /= 4;
-	if (N.BitSize() > 200)
-		t /= 4;
 
 	fbSize = t;
 
@@ -76,13 +72,12 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		len = t*ceill(sqrtl(t));  //TODO: optimize this bound
 	else
 		len = t*t;
-
+	len -= 10000;
 	//Sieve of Eratosphenes
 	std::vector<bool> arr(EratospheneSieve(len + 1));
 
 	Ipp32u counter = 1;
 	Ipp32u l = len-1;
-	Base.push_back(BigNumber::MinusOne());
 	Base.push_back(BigNumber::Two());
 	//This statemet are easy for parallel
 	for (Ipp32u i = 3; i != l && counter <t-1; ++i){
@@ -133,6 +128,7 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 			y *= Base[j].b_power(L[j]);
 		}
 		y %= N;
+		cout << "y = " << y << endl;
 		BigNumber d(N);
 		IppStatus f1 = ippsGcd_BN(BN(x-y), BN(N), BN(d));
 		cout << "f1 " << f1 << endl;
@@ -166,6 +162,8 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	M = v[0];
 	M *= 3;
 	M /= 2;
+	if (N.BitSize() > 210)
+		M /= 7;
 	cout << " M " << M << endl;
 
 	//define pseudo random generator
@@ -182,14 +180,12 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	srand(time(NULL));
 	ippsPRNGSetSeed(BN(BigNumber(rand())), pRand);
 
-	//from this moment i can parallel my programm later
-
 	//fill array of log(p[i])
-	vector<float> prime_log(Base.size() - 1);
+	vector<float> prime_log(Base.size()-1);
 
 	auto b_end = Base.end();
 	for (auto it = Base.begin() + 1; it != b_end; ++it){
-		Ipp32u ind = it - Base.begin()-1;
+		Ipp32u ind = it - Base.begin() -1;
 		vector<Ipp32u> v;
 		it->num2vec(v);
 		prime_log[ind] = log(v[0]);
@@ -211,6 +207,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	float* sieve = new float[2 * M + 1];
 	for (int i = 0; i < 2 * M + 1; ++i)
 		sieve[i] = 0;
+	BigNumber InvA, bt,dt;
 	while (counter < bound){
 		//generate coefficients
 		ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
@@ -233,16 +230,27 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		ippsModInv_BN(BN(q), BN(N), BN(Q1));
 		//Q(x) = Ax^2 + 2*B*x +C
 		//пока есть поиск корней только по простому модулю
-		for (auto it = Base.begin() + 2; it != b_end ; ++it){
-			primeMod = BigNumber(*it);
+		//for (auto it = Base.begin() + 1; it != b_end ; ++it){
+		Ipp32u nb = Base.size();
+		for (Ipp32u i = 1; i < nb; ++i){
+			//primeMod = BigNumber(*it);
+			primeMod = BigNumber(Base[i]);
 			A2 = BigNumber::Two()*A;
-			BigNumber InvA(primeMod);
+			InvA = primeMod;
 			ippsModInv_BN(BN(A2 % primeMod), BN(primeMod), BN(InvA));
 			D = Tonelli_Shanks(N, primeMod);
-			r1 = InvA*(BigNumber::MinusOne()*BigNumber::Two()*B + BigNumber::Two()*D) % primeMod;
-			r2 = InvA*(BigNumber::MinusOne()*BigNumber::Two()*B - BigNumber::Two()*D) % primeMod;
+			bt = B;
+			bt *= BigNumber::MinusOne(); bt *= BigNumber::Two();
+			dt = D; dt *= BigNumber::Two();
+			r1 = bt; r2 = bt;
+			r1 += dt; r2 -= dt;
+			r1 *= InvA; r2 *= InvA;
+			r1 %= primeMod;
+			r2%=primeMod;
+			//r1 = InvA*(BigNumber::MinusOne()*BigNumber::Two()*B + BigNumber::Two()*D) % primeMod;
+			//r2 = InvA*(BigNumber::MinusOne()*BigNumber::Two()*B - BigNumber::Two()*D) % primeMod;
 
-			Ipp32u ind = it - Base.begin() - 1;
+			Ipp32u ind = i - 1;
 			vector<Ipp32u> v, v1, v2;
 			r1.num2vec(v);
 			primeMod.num2vec(v1);
@@ -273,13 +281,18 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 				}
 			}
 		} //end for one prime from factor base
-		//cout << "all roots calculated"<<endl;
-		//clock_t start = clock();
-#pragma omp parallel for
-		for (Ipp32s i = 0; i < 2 * M + 1; ++i){
-			Ipp32s x = i - M;
-			sieve[i] += Q(BigNumber(x)).b_abs().b_ln();
-		}
+
+//#pragma omp parallel for schedule(auto)
+//		for (Ipp32s i = 0; i < 2 * M + 1; ++i){
+//			sieve[i] += Q(BigNumber(i-M)).b_ln();
+//		}
+
+		tbb::parallel_for(tbb::blocked_range<Ipp32s>(0, 2 * M + 1),
+			[=](const tbb::blocked_range<Ipp32s>& r) -> void{
+			for (Ipp32s i = r.begin(); i != r.end(); ++i){
+				sieve[i] += Q(BigNumber(i-M)).b_ln();
+			}
+		});
 		
 		BigNumber R, Qx;
 		for (Ipp32s i = 0; i <2 * M + 1 & counter < bound; ++i){
@@ -288,14 +301,12 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 				BigNumber x(xg);
 				Qx = Q(x);
 
-				BigNumber xt(Qx);
 				if (Qx < BigNumber::Zero()){
-					result[counter].second[0] = 1;
 					Qx *= BigNumber::MinusOne();
 				}
 				//Trial division stage
 				if (Qx > BigNumber::Zero()){
-					for (auto jt = Base.begin() + 1; jt != Base.end(); ++jt){
+					for (auto jt = Base.begin(); jt != Base.end(); ++jt){
 						Ipp32u ind = jt - Base.begin();
 						Ipp32u deg = 0;
 						//Silverman point us to one improvement : R = x mod pi must be equals one of two roots
@@ -324,7 +335,11 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 }
 
 BigNumber QuadraticSieve::Q(const BigNumber& x){
-	return std::move(A*x*x + 2 * B* x + C);
+	BigNumber r(A);
+	BigNumber c(B);
+	c *= BigNumber::Two(); c *= x;
+	r *= x; r *= x; r += c; r += C;
+	return std::move(r);
 }
 
 //Algorithm return x -> x^2 = a (mod p) or return false
@@ -349,6 +364,8 @@ BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p){
 	ippsPRNGen_BN(BN(n), numSize, pPrng);
 	while (LegendreSymbol(n, p) != BigNumber::MinusOne())
 		ippsPRNGen_BN(BN(n), numSize, pPrng);
+
+	delete[] pPrng;
 
 	BigNumber z(modPow(n, q, p));
 	//2.Initialize
@@ -378,7 +395,6 @@ BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p){
 		b *= y;
 		b %= p;
 	}
-
 }
 
 vector<unsigned int> QuadraticSieve::getSparseMatrix(vPair& v){

@@ -93,7 +93,8 @@ bool Wiedemann::vecMultiply(vector<bool>& a, vector<bool>& b){
 vector<bool> Wiedemann::vecSum(vector<bool>& a, vector<bool>& b){
 
 	vector<bool> res(a.size());
-	for (uInt i = 0; i < a.size(); ++i){
+	int n = a.size();
+	for (uInt i = 0; i < n; ++i){
 		res[i] = a[i] ^ b[i];
 	}
 	return std::move(res);

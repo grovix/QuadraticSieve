@@ -4,6 +4,8 @@
 #include "bignum.h"
 #include <fstream>;
 #include <omp.h>
+#include <tbb\blocked_range.h>
+#include <tbb\parallel_for.h>
 typedef vector<pair<BigNumber, vector<Ipp32u>>> vPair;
 
 class QuadraticSieve{
