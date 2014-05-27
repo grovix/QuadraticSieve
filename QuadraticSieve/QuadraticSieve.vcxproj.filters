@@ -58,8 +58,5 @@
     <Text Include="log.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="Text5.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
   </ItemGroup>
 </Project>

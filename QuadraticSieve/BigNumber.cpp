@@ -124,15 +124,17 @@ BigNumber& BigNumber::operator =(const BigNumber& bn)
 {
 	if (this != &bn) { // prevent self copy
 		int length;
-		ippsGetSize_BN(bn.m_pBN, &length);
+		ippsRef_BN(nullptr, &length, nullptr, bn.m_pBN);
+		//ippsGetSize_BN(bn.m_pBN, &length);
 		Ipp32u* pData = new Ipp32u[length];
 		IppsBigNumSGN sgn;
+		//ippsRef_BN(&sgn, &length, &pData, bn.m_pBN);
 		ippsGet_BN(&sgn, &length, pData, bn.m_pBN);
 		//
 		delete (Ipp8u*)m_pBN;
 		create(pData, length, sgn);
 		//
-		delete pData;
+		delete[] pData;
 	}
 	return *this;
 }

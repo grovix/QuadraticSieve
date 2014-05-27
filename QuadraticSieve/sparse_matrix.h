@@ -3,9 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <iterator>
-#include <omp.h>
-#include <tbb\blocked_range.h>
-#include <tbb\parallel_for.h>
 typedef unsigned int uInt;
 using namespace std;
 

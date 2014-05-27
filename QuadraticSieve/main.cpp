@@ -13,6 +13,7 @@
 #include "wiedemann.h"
 #include <array>
 vector<BigNumber> BigNumber::decPowers;
+
 int main(){
 
 	fstream in("input.txt");
@@ -36,12 +37,12 @@ int main(){
 
 	std::map<BigNumber, Ipp32u> factor = comp.getFactor();
 	cout << "Factorization completed! " << endl<<"time = "<<clock() - start << endl;
-	for (auto& i : factor){
-		cout << i.first;
-		if (i.second > 1)
-			cout << "^" << i.second;
-		cout << endl;
-	}
+	//for (auto& i : factor){
+	//	cout << i.first;
+	//	if (i.second > 1)
+	//		cout << "^" << i.second;
+	//	cout << endl;
+	//}
 
 	//QuadraticSieve q(test);
 	//q.doFactorization();
