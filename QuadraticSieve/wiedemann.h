@@ -2,6 +2,7 @@
 #define _WIEDEMANN_H
 #include "sparse_matrix.h"
 
+
 class Wiedemann{
 public:
 	Wiedemann(const SparseMatrix& a);
