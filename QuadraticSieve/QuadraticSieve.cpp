@@ -66,13 +66,12 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	cout << "First factor base size chosen as "<<fbSize << endl;
 
 	Ipp32u len;
-	if (N.BitSize() >= 200)
+	if (N.BitSize() >= 190)
 		len = t*ceill(sqrtl(sqrtl(t)));
 	else if (N.BitSize() >= 50)
 		len = t*ceill(sqrtl(t));  //TODO: optimize this bound
 	else
 		len = t*t;
-	len -= 10000;
 	//Sieve of Eratosphenes
 	std::vector<bool> arr(EratospheneSieve(len + 1));
 
@@ -163,10 +162,10 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	M *= 3;
 	M /= 2;
 	if (N.BitSize() > 210)
-		M /= 7;
+		M /= 4;
 	cout << " M " << M << endl;
 
-	//define pseudo random generator
+	//define pseudo random generators
 	int ctxSize;
 	int maxBitSize = ((N.BitSize()) / 2) - log2(M)+1;
 	maxBitSize /= 2;
@@ -179,6 +178,14 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	ippsPRNGInit(160, pRand);
 	srand(time(NULL));
 	ippsPRNGSetSeed(BN(BigNumber(rand())), pRand);
+
+	int size_TS;
+
+	ippsPRNGGetSize(&size_TS);
+	pPrng_TS = (IppsPRNGState*)(new Ipp8u[size_TS]);
+	ippsPRNGInit(160, pPrng_TS);
+
+	ippsPRNGSetSeed(BN(BigNumber(rand())), pPrng_TS);
 
 	//fill array of log(p[i])
 	vector<float> prime_log(Base.size()-1);
@@ -196,145 +203,172 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		i.second = std::vector<Ipp32u>(fbSize+1);
 	}
 
-	Ipp32u counter = 0;
-	Ipp32u bound = fbSize+1;
-	BigNumber three(3);
-	BigNumber four(4);
-	BigNumber  D, h2, B2, primeMod, r1, r2, A2;
+	BigNumber  D, h2, B2, primeMod, r1, r2, A2, q,InvA, bt,dt;
 
-	BigNumber test;
-	BigNumber q;
-	float* sieve = new float[2 * M + 1];
-	for (int i = 0; i < 2 * M + 1; ++i)
-		sieve[i] = 0;
-	BigNumber InvA, bt,dt;
-	while (counter < bound){
-		//generate coefficients
-		ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
-		while (!(q.isPrime(nTrials) && LegendreSymbol(N,q) == BigNumber::One())){
-			ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
-		}
-		cout << "counter = " << counter << endl;
-		//cout << "Switch polynom" << endl;
-		A = q*q;
-
-		//now use HenselТs Lemma
-		BigNumber B1 = Tonelli_Shanks(N, q);
-		BigNumber invF(q);
-		ippsModInv_BN(BN(BigNumber::Two()*B1 %q), BN(q), BN(invF));
-
-		BigNumber t = ((N - B1*B1) / q)*invF % q;
-		B = (B1 + q*t) % A;
-		C = (B*B - N) / A;
-		BigNumber Q1(N);
-		ippsModInv_BN(BN(q), BN(N), BN(Q1));
-		//Q(x) = Ax^2 + 2*B*x +C
-		//пока есть поиск корней только по простому модулю
-		//for (auto it = Base.begin() + 1; it != b_end ; ++it){
-		Ipp32u nb = Base.size();
-		for (Ipp32u i = 1; i < nb; ++i){
-			//primeMod = BigNumber(*it);
-			primeMod = BigNumber(Base[i]);
-			A2 = BigNumber::Two()*A;
-			InvA = primeMod;
-			ippsModInv_BN(BN(A2 % primeMod), BN(primeMod), BN(InvA));
-			D = Tonelli_Shanks(N, primeMod);
-			bt = B;
-			bt *= BigNumber::MinusOne(); bt *= BigNumber::Two();
-			dt = D; dt *= BigNumber::Two();
-			r1 = bt; r2 = bt;
-			r1 += dt; r2 -= dt;
-			r1 *= InvA; r2 *= InvA;
-			r1 %= primeMod;
-			r2%=primeMod;
-			//r1 = InvA*(BigNumber::MinusOne()*BigNumber::Two()*B + BigNumber::Two()*D) % primeMod;
-			//r2 = InvA*(BigNumber::MinusOne()*BigNumber::Two()*B - BigNumber::Two()*D) % primeMod;
-
-			Ipp32u ind = i - 1;
-			vector<Ipp32u> v, v1, v2;
-			r1.num2vec(v);
-			primeMod.num2vec(v1);
-			r2.num2vec(v2);
-			Ipp32s stepR1 = v[0];
-			Ipp32s primePower = v1[0];
-			Ipp32s stepR2 = v2[0];
-			if (primePower <= M){
-				//sieving by first root
-				while (stepR1 <= M){
-					sieve[stepR1 + M] -= prime_log[ind];
-					stepR1 += primePower;
-				}
-				stepR1 = v[0] + M - primePower;
-				while (stepR1 >= 0){
-					sieve[stepR1] -= prime_log[ind];
-					stepR1 -= primePower;
-				}
-				//sieving by second root
-				while (stepR2 <= M){
-					sieve[stepR2 + M] -= prime_log[ind];
-					stepR2 += primePower;
-				}
-				stepR2 = v2[0] + M - primePower;
-				while (stepR2 >= 0){
-					sieve[stepR2] -= prime_log[ind];
-					stepR2 -= primePower;
-				}
-			}
-		} //end for one prime from factor base
-
-//#pragma omp parallel for schedule(auto)
-//		for (Ipp32s i = 0; i < 2 * M + 1; ++i){
-//			sieve[i] += Q(BigNumber(i-M)).b_ln();
-//		}
-
-		tbb::parallel_for(tbb::blocked_range<Ipp32s>(0, 2 * M + 1),
-			[=](const tbb::blocked_range<Ipp32s>& r) -> void{
-			for (Ipp32s i = r.begin(); i != r.end(); ++i){
-				sieve[i] += Q(BigNumber(i-M)).b_ln();
-			}
-		});
-		
-		BigNumber R, Qx;
-		for (Ipp32s i = 0; i <2 * M + 1 & counter < bound; ++i){
-			if (sieve[i] <= epsilon){
-				Ipp32s xg = i - M;
-				BigNumber x(xg);
-				Qx = Q(x);
-
-				if (Qx < BigNumber::Zero()){
-					Qx *= BigNumber::MinusOne();
-				}
-				//Trial division stage
-				if (Qx > BigNumber::Zero()){
-					for (auto jt = Base.begin(); jt != Base.end(); ++jt){
-						Ipp32u ind = jt - Base.begin();
-						Ipp32u deg = 0;
-						//Silverman point us to one improvement : R = x mod pi must be equals one of two roots
-						//I'll do it later
-						while (Qx % *jt == BigNumber::Zero()){
-							++deg;
-							Qx /= *jt;
-						}
-						result[counter].second[ind] = deg;
-					}
-					if (Qx == BigNumber::One()){
-						result[counter].first = (A*x + B) * Q1; //???
-						++counter;
-					}
-					else{
-						for (auto& kk : result[counter].second)  //I want to zero all degrees
-							kk = 0;
-					}
-				}
-			}
-		}
-		for (int i = 0; i < 2 * M + 1; ++i)
-			sieve[i] = 0;
+	//parallel control
+	Ipp32u lenM = 2 * M + 1;
+	numThreads = 4;
+	omp_set_num_threads(numThreads);
+	float** sieve = new float*[numThreads];
+	for (int i = 0; i < numThreads; ++i){
+		sieve[i] = new float[lenM];
 	}
+	for (int i = 0; i < numThreads; ++i){
+		for (Ipp32u j = 0; j < lenM; ++j){
+			sieve[i][j] = 0;
+		}
+	}
+	Ipp32u* thread_begin_index = new Ipp32u[numThreads];
+	Ipp32u* thread_bound = new Ipp32u[numThreads];
+	thread_begin_index[0] = 0;
+	Ipp32u quo = (fbSize + 1) / numThreads;
+	for (int i = 1; i < numThreads; ++i){
+		thread_begin_index[i] = thread_begin_index[i - 1] + quo;
+	}
+	for (int i = 0; i < numThreads - 1; ++i){
+		thread_bound[i] = thread_begin_index[i + 1] - thread_begin_index[i];
+	}
+	thread_bound[numThreads - 1] = (fbSize + 1) - thread_begin_index[numThreads - 1];
+	Ipp32u* thread_counter = new Ipp32u[numThreads];
+	for (int i = 0; i < numThreads; ++i){
+		thread_counter[i] = 0;
+	}
+	
+	BigNumber A, B, C, m_TS, b_TS, ts_1,ts_2,ts_3,ts_4,ts_5,ts_6,_ts_7,ts_8, N_TS;
+	Ipp32u ts_9;
+
+#pragma omp parallel for private(A,B,C,D, h2, B2, primeMod, r1, r2, A2, q,InvA, bt,dt, m_TS, b_TS,ts_1,ts_2,ts_3,ts_4,ts_5,ts_6,_ts_7,ts_8,ts_9, N_TS)
+	for (int thread_id = 0; thread_id < numThreads; thread_id++){
+		N_TS = N;
+		while (thread_counter[thread_id] < thread_bound[thread_id]){
+			//generate coefficients
+			ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
+			while (!(q.isPrime(nTrials) && LegendreSymbol(N_TS, q) == BigNumber::One())){
+				ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
+			}
+			cout << "thread_id " << thread_id << " counter = " << thread_counter[thread_id] << endl;
+			//cout << "Switch polynom" << endl;
+			A = q*q;
+
+			//now use HenselТs Lemma
+			BigNumber B1;
+
+			B1 = Tonelli_Shanks(N_TS, q, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9);
+			BigNumber invF(q);
+
+			ippsModInv_BN(BN(BigNumber::Two()*B1 %q), BN(q), BN(invF));
+
+			BigNumber t = ((N - B1*B1) / q)*invF % q;
+			B = (B1 + q*t) % A;
+			C = (B*B - N) / A;
+			BigNumber Q1(N);
+			ippsModInv_BN(BN(q), BN(N), BN(Q1));
+			//Q(x) = Ax^2 + 2*B*x +C
+			Ipp32u nb = Base.size();
+			for (Ipp32u i = 1; i < nb; ++i){
+				//primeMod = BigNumber(*it);
+				primeMod = Base[i];
+				A2 = BigNumber::Two()*A;
+				InvA = primeMod;
+				ippsModInv_BN(BN(A2 % primeMod), BN(primeMod), BN(InvA));
+				D = Tonelli_Shanks(N_TS, primeMod, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9);
+				bt = B;
+				bt *= BigNumber::MinusOne(); bt *= BigNumber::Two();
+				dt = D; dt *= BigNumber::Two();
+				r1 = bt; r2 = bt;
+				r1 += dt; r2 -= dt;
+				r1 *= InvA; r2 *= InvA;
+				r1 %= primeMod;
+				r2 %= primeMod;
+
+				Ipp32u ind = i - 1;
+				vector<Ipp32u> v, v1, v2;
+				r1.num2vec(v);
+				primeMod.num2vec(v1);
+				r2.num2vec(v2);
+				Ipp32s stepR1 = v[0];
+				Ipp32s primePower = v1[0];
+				Ipp32s stepR2 = v2[0];
+				if (primePower <= M){
+					//sieving by first root
+					while (stepR1 <= M){
+						sieve[thread_id][stepR1 + M] -= prime_log[ind];
+						stepR1 += primePower;
+					}
+					stepR1 = v[0] + M - primePower;
+					while (stepR1 >= 0){
+						sieve[thread_id][stepR1] -= prime_log[ind];
+						stepR1 -= primePower;
+					}
+					//sieving by second root
+					while (stepR2 <= M){
+						sieve[thread_id][stepR2 + M] -= prime_log[ind];
+						stepR2 += primePower;
+					}
+					stepR2 = v2[0] + M - primePower;
+					while (stepR2 >= 0){
+						sieve[thread_id][stepR2] -= prime_log[ind];
+						stepR2 -= primePower;
+					}
+				}
+			} //end for one prime from factor base
+
+			//tbb::parallel_for(tbb::blocked_range<Ipp32s>(0, 2 * M + 1),
+			//	[=](const tbb::blocked_range<Ipp32s>& r) -> void{
+			//	for (Ipp32s i = r.begin(); i != r.end(); ++i){
+			//		sieve[0][i] += Q(BigNumber(i - M)).b_ln();
+			//	}
+			//});
+
+			for (Ipp32s i = 0; i < 2 * M + 1; ++i){
+				sieve[thread_id][i] += Q(BigNumber(i - M),A,B,C).b_ln();
+			}
+
+			BigNumber R, Qx;
+			for (Ipp32s i = 0; i < 2 * M + 1 & thread_counter[thread_id] < thread_bound[thread_id]; ++i){
+				if (abs(sieve[thread_id][i]) <= epsilon){
+					Ipp32s xg = i - M;
+					BigNumber x(xg);
+					Qx = Q(x,A,B,C);
+					Ipp32u res_index = thread_begin_index[thread_id] + thread_counter[thread_id];
+					if (Qx < BigNumber::Zero()){
+						Qx *= BigNumber::MinusOne();
+					}
+					//Trial division stage
+					if (Qx > BigNumber::Zero()){
+						for (auto jt = Base.begin(); jt != Base.end(); ++jt){
+							Ipp32u ind = jt - Base.begin();
+							Ipp32u deg = 0;
+							BigNumber ttt(*jt);
+							//Silverman point us to one improvement : R = x mod pi must be equals one of two roots
+							//I'll do it later
+							while (Qx % ttt == BigNumber::Zero()){
+								++deg;
+								Qx /= ttt;
+							}
+							result[res_index].second[ind] = deg;
+						}
+						if (Qx == BigNumber::One()){
+							result[res_index].first = (A*x + B) * Q1; //???
+							++thread_counter[thread_id];
+						}
+						else{
+							for (auto& kk : result[res_index].second)  //I want to zero all degrees
+								kk = 0;
+						}
+					}
+				}
+			}
+
+			for (int i = 0; i < 2 * M + 1; ++i)
+				sieve[thread_id][i] = 0;
+		}
+	}
+	delete pPrng_TS;
 	return std::move(result);
 }
 
-BigNumber QuadraticSieve::Q(const BigNumber& x){
+BigNumber QuadraticSieve::Q(const BigNumber& x, BigNumber& A, BigNumber& B, BigNumber& C){
 	BigNumber r(A);
 	BigNumber c(B);
 	c *= BigNumber::Two(); c *= x;
@@ -343,56 +377,47 @@ BigNumber QuadraticSieve::Q(const BigNumber& x){
 }
 
 //Algorithm return x -> x^2 = a (mod p) or return false
-BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p){
-	Ipp32u e = 0;
-	BigNumber q = p - BigNumber::One();
-	while (q.IsEven()){
-		++e;
-		q /= 2;
+BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p, BigNumber&m, BigNumber&b,
+	BigNumber& q_TS, BigNumber& n_TS, BigNumber& z_TS, BigNumber&  two_TS, BigNumber& t_TS, BigNumber& y_TS, BigNumber& r_TS, BigNumber& x_TS, Ipp32u e_TS){
+	e_TS = 0;
+	two_TS = BigNumber(2);
+	q_TS = p - BigNumber::One();
+	while (q_TS.IsEven()){
+		++e_TS;
+		q_TS /= BigNumber::Two();
 	}
 	//1.Find generator
-	BigNumber n;
-	int size;
-	int numSize = 10;  //What size "n" should be?
 
-	ippsPRNGGetSize(&size);
-	IppsPRNGState* pPrng = (IppsPRNGState*)(new Ipp8u[size]);
-	ippsPRNGInit(160, pPrng);
-
-	ippsPRNGSetSeed(BN(BigNumber(rand())), pPrng);
-
-	ippsPRNGen_BN(BN(n), numSize, pPrng);
-	while (LegendreSymbol(n, p) != BigNumber::MinusOne())
-		ippsPRNGen_BN(BN(n), numSize, pPrng);
-
-	delete[] pPrng;
-
-	BigNumber z(modPow(n, q, p));
+	ippsPRNGen_BN(BN(n_TS), numSize_TS, pPrng_TS);
+	while (LegendreSymbol(n_TS, p) != BigNumber::MinusOne())
+		ippsPRNGen_BN(BN(n_TS), numSize_TS, pPrng_TS);
+	z_TS = modPow(n_TS, q_TS, p);
 	//2.Initialize
-	BigNumber two(2);
-	BigNumber t;
-	BigNumber y(z);
-	BigNumber r(e);
-	BigNumber x(modPow(a, (q - BigNumber::One()) / BigNumber::Two(), p));
-	BigNumber b(a*(x*x %p) % p);
-	x = a*x %p;
+	y_TS = z_TS;
+	r_TS = e_TS;
+	x_TS = modPow(a, (q_TS - BigNumber::One()) / two_TS, p);
+	b = x_TS; b *= x_TS; b %= p; b *= a; b %= p;
+	x_TS = a*x_TS %p;
 	while (true){
-		if (b % p == BigNumber::One())
-			return x;
+		if (b % p == BigNumber::One()){
+			return std::move(x_TS);
+		}
 		//3.Find exponent
-		BigNumber m(1);
-		while (modPow(b, two.b_power(m), p) != BigNumber::One())
+		m = BigNumber::One();
+		while (modPow(b, two_TS.b_power(m), p) != BigNumber::One())
 			m += BigNumber::One();
-		if (m == r)
+		if (m == r_TS){
 			return BigNumber::Zero();
+		}
 		//4.Reduce exponent
-		t = modPow(y, two.b_power(r - m - BigNumber::One()), p);
-		y = t*t;
-		y %= p;
-		r = m;
-		x *= t;
-		x %= p;
-		b *= y;
+		t_TS = modPow(y_TS, two_TS.b_power(r_TS - m - BigNumber::One()), p);
+		y_TS = t_TS;
+		y_TS *= t_TS;
+		y_TS %= p;
+		r_TS = m;
+		x_TS *= t_TS;
+		x_TS %= p;
+		b *= y_TS;
 		b %= p;
 	}
 }

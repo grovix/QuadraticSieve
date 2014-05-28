@@ -12,17 +12,7 @@
 #include <time.h>
 #include "wiedemann.h"
 #include <array>
-#include <thread>
 vector<BigNumber> BigNumber::decPowers;
-
-void testFill(int**a, int id){
-	for (int i = 0; i < 4; i++)
-		a[id][i] = id;
-}
-
-void threadTest(){
-
-}
 int main(){
 
 	fstream in("input.txt");

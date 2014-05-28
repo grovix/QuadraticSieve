@@ -55,10 +55,10 @@
     <Text Include="input.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="log.txt">
+    <Text Include="Text5.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="Text5.txt">
+    <Text Include="TS_log.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>

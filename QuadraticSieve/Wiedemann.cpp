@@ -58,7 +58,7 @@ vector<bool> Wiedemann::getSolution(){
 	while (!B.isZero(w)){
 		r = w;
 		w = B.Multiply(w);
-		if (counter > F.size()){
+		if (counter > F.size()*5){
 			cout << "bad polynom" << endl;
 			return std::move(vector<bool>(N, false));
 		}

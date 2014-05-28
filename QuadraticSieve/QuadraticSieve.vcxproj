@@ -29,7 +29,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Intel C++ Compiler XE 14.0</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <UseIntelIPP>true</UseIntelIPP>
+    <UseIntelIPP>Sequential</UseIntelIPP>
     <UseIntelTBB>true</UseIntelTBB>
     <UseIntelMKL>Parallel</UseIntelMKL>
   </PropertyGroup>
@@ -79,8 +79,9 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <EnableMatrixMultiplyLibraryCall>Yes</EnableMatrixMultiplyLibraryCall>
-      <OpenMP>GenerateSequentialCode</OpenMP>
+      <OpenMP>GenerateParallelCode</OpenMP>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <Parallelization>true</Parallelization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,8 +161,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="input.txt" />
-    <Text Include="log.txt" />
     <Text Include="Text5.txt" />
+    <Text Include="TS_log.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
