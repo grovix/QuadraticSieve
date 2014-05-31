@@ -58,12 +58,13 @@ vector<bool> Wiedemann::getSolution(){
 	while (!B.isZero(w)){
 		r = w;
 		w = B.Multiply(w);
-		if (counter > F.size()*5){
+		if (counter > 10){ //it's experimental magick number
 			cout << "bad polynom" << endl;
 			return std::move(vector<bool>(N, false));
 		}
 		counter++;
 	}
+	cout << "Wiedemann counter = " << counter << endl;
 	return std::move(r);
 }
 
@@ -74,7 +75,7 @@ vector<bool> Wiedemann::getRandomVector(){
 		ippsPRNGen_BN(BN(t), bnBitSize, pPrng);
 		vector<Ipp32u> g;
 		t.num2vec(g);
-		i = (bool)g[0]; 
+		i = (bool)(g[0]%2); 
 		//i = rand() % 2; //Mother of Random !!!
 	}
 	return std::move(v);
@@ -128,7 +129,7 @@ vector<bool> Wiedemann::Berlekamp_Massey(vector<bool>& a){
 			}
 		}
 	}
-
+	cout << "l = " << l << endl;
 	for (uInt i = 0; i < l + 1; ++i)
 		F.push_back(C[i]);
 

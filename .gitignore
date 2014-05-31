@@ -244,3 +244,6 @@ QuadraticSieve/input.txt
 *.amplxe
 *.sc
 *.amplxeproj
+*.tlog
+*.cs
+*.bsc

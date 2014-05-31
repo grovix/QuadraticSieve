@@ -15,7 +15,7 @@ public:
 private:
 	uInt N;
 	SparseMatrix B;
-	const int bnBitSize = 1;
+	const int bnBitSize = 10;
 };
 
 #endif

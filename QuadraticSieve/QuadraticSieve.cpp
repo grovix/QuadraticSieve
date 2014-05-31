@@ -57,21 +57,28 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	std::pair<BigNumber, BigNumber> divisors;
 	cout << "bit size of " << N << " is " << N.BitSize() << endl;
 	double nLg = N.b_ln();
-	double t1 = exp(0.5*sqrt(nLg) * sqrt(log(nLg))); //TODO: experiment with it
-	Ipp32u t = ceil(t1);
-	t /= 8;  //Optimize this
 
-	fbSize = t;
-
-	cout << "First factor base size chosen as "<<fbSize << endl;
-
-	Ipp32u len;
-	if (N.BitSize() >= 190)
-		len = t*ceill(sqrtl(sqrtl(t)));
-	else if (N.BitSize() >= 50)
-		len = t*ceill(sqrtl(t));  //TODO: optimize this bound
+	double B = exp(sqrt(nLg * log((nLg))));
+	B = sqrt(B);
+	int bS = N.BitSize();
+	if (bS < 55)
+		B *= 10;
+	else if (bS < 74)
+		B *= 6;
+	else if (bS < 94)
+		B *= 5;
+	else if (bS < 105)
+		B *= 2;
+	else if (bS < 125)
+		B *= 3;
+	else if (bS < 203)
+		B *= 2;
+	else if (bS < 270)
+		B *= 1.2;
 	else
-		len = t*t;
+		B = 41000; //Maximum value for my computer
+
+	Ipp32u len = ceil(B);
 	//Sieve of Eratosphenes
 	std::vector<bool> arr(EratospheneSieve(len + 1));
 
@@ -79,7 +86,8 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	Ipp32u l = len-1;
 	Base.push_back(BigNumber::Two());
 	//This statemet are easy for parallel
-	for (Ipp32u i = 3; i != l && counter <t-1; ++i){
+	//for (Ipp32u i = 3; i != l && counter <t-1; ++i){
+	for (Ipp32u i = 3; i != l; ++i){
 		if (arr[i]){
 			BigNumber buf(i);
 			if (LegendreSymbol(N, buf) == BigNumber::One()){      
@@ -91,6 +99,11 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		}
 	}
 
+	Ipp32u counter_bound;
+	if (N.BitSize() < 75)
+		counter_bound = 100;
+	else
+		counter_bound = 20;
 	cout << "Base size: " << Base.size() << endl;
 	fbSize = Base.size();
 	vector<pair<BigNumber, vector<Ipp32u>>> smooth(sieving());
@@ -102,17 +115,16 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	vector<bool> w(calc.getSolution());
 	while (SM.isZero(w))
 		w = calc.getSolution();
-
+	Ipp32u success_counter = 0;
 	bool isCompleted = false;
 	while (!isCompleted){
 		BigNumber x(1);
 		for (uInt i = 0; i < fbSize + 1; ++i){
 			if (w[i]){
 				x *= smooth[i].first;
-				//x %= N;
+				x %= N;
 			}
 		}
-		x %= N;
 		cout <<"x "<< x << endl;
 		BigNumber y(1);
 		vector<Ipp32u> L(fbSize,0);
@@ -125,21 +137,30 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 		}
 		for (Ipp32u j = 0; j < fbSize; ++j){
 			y *= Base[j].b_power(L[j]);
+			y %= N;
 		}
-		y %= N;
 		cout << "y = " << y << endl;
+		cout << "- y mod N =" << (BigNumber::MinusOne()*y) % N << endl;
+		//system("pause");
 		BigNumber d(N);
 		IppStatus f1 = ippsGcd_BN(BN(x-y), BN(N), BN(d));
 		cout << "f1 " << f1 << endl;
-		if (d != N && d != BigNumber::One() && d != BigNumber::Zero()){
+		if (d != N && d != BigNumber::One()){
 			cout << "Completed !!! " << endl;
 			isCompleted = true;
 			divisors.first = d;
 			divisors.second = N / d;
 		}
 		else{
-			cout << "d " << d << endl;
+			if (d == BigNumber::One())
+				cout << "d " << d << endl;
 			w = calc.getSolution();
+			success_counter++;
+			if (success_counter > counter_bound){
+				divisors.first = BigNumber::Zero();
+				divisors.second = divisors.first;
+				return divisors;
+			}
 			while (SM.isZero(w))
 				w = calc.getSolution();
 		}
@@ -159,10 +180,29 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	vector<Ipp32u> v;
 	k.num2vec(v);
 	M = v[0];
-	M *= 3;
+	int bS = N.BitSize();
+	if (bS < 55)
+		M *= 15;
+	else if (bS < 74)
+		M *= 12;
+	else if (bS < 89)
+		M *= 10;
+	else if (bS < 94)
+		M *= 8;
+	else if (bS < 105)
+		M *= 6;
+	else if (bS < 125)
+		M *= 3;
+	//else if (bS < 150)
+	//	M *= 2;
+	else if (bS < 203)
+		M *= 4;
+	else if (bS < 270)
+		M *= 8;
+	else
+		M *= 2;
 	M /= 2;
-	if (N.BitSize() > 210)
-		M /= 4;
+
 	cout << " M " << M << endl;
 
 	//define pseudo random generators
@@ -207,7 +247,11 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 
 	//parallel control
 	Ipp32u lenM = 2 * M + 1;
-	numThreads = 4;
+	numThreads = 1;
+	if (N.BitSize() > 68)
+		numThreads = 2;
+	if (N.BitSize() > 80)
+		numThreads = 4;
 	omp_set_num_threads(numThreads);
 	float** sieve = new float*[numThreads];
 	for (int i = 0; i < numThreads; ++i){
@@ -237,7 +281,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	BigNumber A, B, C, m_TS, b_TS, ts_1,ts_2,ts_3,ts_4,ts_5,ts_6,_ts_7,ts_8, N_TS;
 	Ipp32u ts_9;
 
-#pragma omp parallel for private(A,B,C,D, h2, B2, primeMod, r1, r2, A2, q,InvA, bt,dt, m_TS, b_TS,ts_1,ts_2,ts_3,ts_4,ts_5,ts_6,_ts_7,ts_8,ts_9, N_TS)
+#pragma omp parallel for private(A,B,C,D, h2, B2, primeMod, r1, r2, A2, q,InvA, bt,dt, m_TS, b_TS,ts_1,ts_2,ts_3,ts_4,ts_5,ts_6,_ts_7,ts_8,ts_9, N_TS) schedule(auto)
 	for (int thread_id = 0; thread_id < numThreads; thread_id++){
 		N_TS = N;
 		while (thread_counter[thread_id] < thread_bound[thread_id]){

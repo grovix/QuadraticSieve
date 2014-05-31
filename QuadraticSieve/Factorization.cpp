@@ -114,14 +114,21 @@ void Factorization::CallQuadraticSieve(BigNumber& N){
 	cout << "QS factor "<< N << endl;
 	QuadraticSieve q(N);
 	std::pair<BigNumber, BigNumber> res = q.doFactorization();
-	if (res.first.isPrime(nTraits))
-		insertDivisor(res.first);
-	else
-		rho_Pollard(res.first);
-	if (res.second.isPrime(nTraits))
-		insertDivisor(res.second);
-	else
-		rho_Pollard(res.second);
+	if (res.first == BigNumber::Zero()){
+		QuadraticSieve q(N);
+		res = q.doFactorization();
+	}
+	else{
+		if (res.first.isPrime(nTraits))
+			insertDivisor(res.first);
+		else
+			rho_Pollard(res.first);
+		if (res.second.isPrime(nTraits))
+			insertDivisor(res.second);
+		else
+			rho_Pollard(res.second);
+		return;
+	}
 	return;
 }
 
