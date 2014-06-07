@@ -1,7 +1,7 @@
 #if !defined _WIEDEMANN_H
 #define _WIEDEMANN_H
 #include "sparse_matrix.h"
-
+#include <fstream>
 
 class Wiedemann{
 public:
@@ -16,6 +16,7 @@ private:
 	uInt N;
 	SparseMatrix B;
 	const int bnBitSize = 10;
+	ofstream out;
 };
 
 #endif

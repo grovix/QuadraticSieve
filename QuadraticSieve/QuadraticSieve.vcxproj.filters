@@ -61,5 +61,8 @@
     <Text Include="TS_log.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="w_log.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

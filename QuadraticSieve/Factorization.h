@@ -20,7 +20,7 @@ public:
 
 	Ipp32u tDivBound = 50000;
 	Ipp32u pollardIter = 100000;
-	int nTraits = 10;
+	int nTraits = 20;
 private:
 	std::map<BigNumber, Ipp32u> factor;
 	BigNumber number;

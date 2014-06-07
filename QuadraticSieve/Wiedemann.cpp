@@ -11,12 +11,14 @@ Wiedemann::Wiedemann(const SparseMatrix& a){
 	ippsPRNGGetSize(&size);
 	pPrng = (IppsPRNGState*)(new Ipp8u[size]);
 	ippsPRNGInit(160, pPrng);
+	out.open("w_log.txt");
 }
 
 vector<bool> Wiedemann::getSolution(){
 	//TODO: restart if vector isn't want to compute
 	//Check if vector w is zero
 	cout << "Wiedemann " << endl;
+	clock_t start = clock();
 	vector<bool> r;
 	vector<bool> x(getRandomVector());
 	vector<bool> y(getRandomVector());
@@ -58,13 +60,14 @@ vector<bool> Wiedemann::getSolution(){
 	while (!B.isZero(w)){
 		r = w;
 		w = B.Multiply(w);
-		if (counter > 10){ //it's experimental magick number
+		if (counter > F.size()/2){ //it's experimental magick number
 			cout << "bad polynom" << endl;
 			return std::move(vector<bool>(N, false));
 		}
 		counter++;
 	}
 	cout << "Wiedemann counter = " << counter << endl;
+	out << "good vector "<<clock() - start << endl;
 	return std::move(r);
 }
 

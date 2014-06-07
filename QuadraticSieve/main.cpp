@@ -24,7 +24,6 @@ void threadTest(){
 
 }
 int main(){
-
 	fstream in("input.txt");
 	std::string num;
 	in >> num;
@@ -57,6 +56,8 @@ int main(){
 	//q.doFactorization();
 
 	cout << "Complete " << clock() - start << endl;
+	ofstream out("TS_log.txt");
+	out << "Complete " << clock() - start << endl;
 	system("pause");
 	return 0;
 }

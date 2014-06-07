@@ -52,6 +52,7 @@ BigNumber QuadraticSieve::LegendreSymbol(const BigNumber& a, const BigNumber& p)
 	return r;
 }
 
+
 std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 
 	std::pair<BigNumber, BigNumber> divisors;
@@ -72,12 +73,12 @@ std::pair<BigNumber, BigNumber> QuadraticSieve::doFactorization(){
 	else if (bS < 125)
 		B *= 3;
 	else if (bS < 203)
-		B *= 2;
+		B *= 2; 
 	else if (bS < 270)
 		B *= 1.2;
 	else
-		B = 41000; //Maximum value for my computer
-
+		B *= 1;
+	//B /= 16;
 	Ipp32u len = ceil(B);
 	//Sieve of Eratosphenes
 	std::vector<bool> arr(EratospheneSieve(len + 1));
@@ -202,30 +203,45 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 	else
 		M *= 2;
 	M /= 2;
-
+	//M = 300000;
 	cout << " M " << M << endl;
 
+	numThreads = 1;
+	//if (N.BitSize() > 68)
+	//	numThreads = 2;
+	if (N.BitSize() > 80)
+		numThreads = 4;
 	//define pseudo random generators
+
 	int ctxSize;
 	int maxBitSize = ((N.BitSize()) / 2) - log2(M)+1;
 	maxBitSize /= 2;
 	ippsPrimeGetSize(maxBitSize, &ctxSize);
-	IppsPrimeState* pPrimeG = (IppsPrimeState*)(new Ipp8u[ctxSize]);
-	ippsPrimeInit(maxBitSize, pPrimeG);
+	IppsPrimeState **pPrimeG = new IppsPrimeState*[numThreads];
+	for (int i = 0; i < numThreads; ++i){
+		pPrimeG[i] = (IppsPrimeState*)(new Ipp8u[ctxSize]);
+		ippsPrimeInit(maxBitSize, pPrimeG[i]);
+	}
 
-	ippsPRNGGetSize(&ctxSize);
-	IppsPRNGState* pRand = (IppsPRNGState*)(new Ipp8u[ctxSize]);
-	ippsPRNGInit(160, pRand);
 	srand(time(NULL));
-	ippsPRNGSetSeed(BN(BigNumber(rand())), pRand);
+	ippsPRNGGetSize(&ctxSize);
+	IppsPRNGState **pRand = new IppsPRNGState*[numThreads];
+	for (int i = 0; i < numThreads; ++i){
+		pRand[i] = (IppsPRNGState*)(new Ipp8u[ctxSize]);
+		ippsPRNGInit(160, pRand[i]);
+		ippsPRNGSetSeed(BN(BigNumber(rand())), pRand[i]);
+	}
 
 	int size_TS;
 
 	ippsPRNGGetSize(&size_TS);
-	pPrng_TS = (IppsPRNGState*)(new Ipp8u[size_TS]);
-	ippsPRNGInit(160, pPrng_TS);
+	pPrng_TS = new IppsPRNGState*[numThreads];
+	for (int i = 0; i < numThreads; ++i){
+		pPrng_TS[i] = (IppsPRNGState*)(new Ipp8u[size_TS]);
+		ippsPRNGInit(160, pPrng_TS[i]);
+		ippsPRNGSetSeed(BN(BigNumber(rand())), pPrng_TS[i]);
 
-	ippsPRNGSetSeed(BN(BigNumber(rand())), pPrng_TS);
+	}
 
 	//fill array of log(p[i])
 	vector<float> prime_log(Base.size()-1);
@@ -247,11 +263,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 
 	//parallel control
 	Ipp32u lenM = 2 * M + 1;
-	numThreads = 1;
-	if (N.BitSize() > 68)
-		numThreads = 2;
-	if (N.BitSize() > 80)
-		numThreads = 4;
+
 	omp_set_num_threads(numThreads);
 	float** sieve = new float*[numThreads];
 	for (int i = 0; i < numThreads; ++i){
@@ -286,24 +298,26 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		N_TS = N;
 		while (thread_counter[thread_id] < thread_bound[thread_id]){
 			//generate coefficients
-			ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
+			ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG[thread_id], ippsPRNGen, pRand[thread_id]);
 			while (!(q.isPrime(nTrials) && LegendreSymbol(N_TS, q) == BigNumber::One())){
-				ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG, ippsPRNGen, pRand);
+				ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG[thread_id], ippsPRNGen, pRand[thread_id]);
 			}
-			cout << "thread_id " << thread_id << " counter = " << thread_counter[thread_id] << endl;
+			//cout << "thread_id " << thread_id << " counter = " << thread_counter[thread_id] << endl;
 			//cout << "Switch polynom" << endl;
 			A = q*q;
 
 			//now use Hensel’s Lemma
 			BigNumber B1;
 
-			B1 = Tonelli_Shanks(N_TS, q, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9);
+			B1 = Tonelli_Shanks(N_TS, q, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9,thread_id);
 			BigNumber invF(q);
 
 			ippsModInv_BN(BN(BigNumber::Two()*B1 %q), BN(q), BN(invF));
 
 			BigNumber t = ((N - B1*B1) / q)*invF % q;
 			B = (B1 + q*t) % A;
+			if (A / B == BigNumber::One())
+				B = A - B;
 			C = (B*B - N) / A;
 			BigNumber Q1(N);
 			ippsModInv_BN(BN(q), BN(N), BN(Q1));
@@ -315,7 +329,7 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 				A2 = BigNumber::Two()*A;
 				InvA = primeMod;
 				ippsModInv_BN(BN(A2 % primeMod), BN(primeMod), BN(InvA));
-				D = Tonelli_Shanks(N_TS, primeMod, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9);
+				D = Tonelli_Shanks(N_TS, primeMod, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9,thread_id);
 				bt = B;
 				bt *= BigNumber::MinusOne(); bt *= BigNumber::Two();
 				dt = D; dt *= BigNumber::Two();
@@ -408,6 +422,9 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 				sieve[thread_id][i] = 0;
 		}
 	}
+	for (int i = 0; i < numThreads; ++i){
+		delete[] pPrng_TS[i];
+	}
 	delete pPrng_TS;
 	return std::move(result);
 }
@@ -422,7 +439,7 @@ BigNumber QuadraticSieve::Q(const BigNumber& x, BigNumber& A, BigNumber& B, BigN
 
 //Algorithm return x -> x^2 = a (mod p) or return false
 BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p, BigNumber&m, BigNumber&b,
-	BigNumber& q_TS, BigNumber& n_TS, BigNumber& z_TS, BigNumber&  two_TS, BigNumber& t_TS, BigNumber& y_TS, BigNumber& r_TS, BigNumber& x_TS, Ipp32u e_TS){
+	BigNumber& q_TS, BigNumber& n_TS, BigNumber& z_TS, BigNumber&  two_TS, BigNumber& t_TS, BigNumber& y_TS, BigNumber& r_TS, BigNumber& x_TS, Ipp32u e_TS, int thread_id){
 	e_TS = 0;
 	two_TS = BigNumber(2);
 	q_TS = p - BigNumber::One();
@@ -432,9 +449,9 @@ BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p, 
 	}
 	//1.Find generator
 
-	ippsPRNGen_BN(BN(n_TS), numSize_TS, pPrng_TS);
+	ippsPRNGen_BN(BN(n_TS), numSize_TS, pPrng_TS[thread_id]);
 	while (LegendreSymbol(n_TS, p) != BigNumber::MinusOne())
-		ippsPRNGen_BN(BN(n_TS), numSize_TS, pPrng_TS);
+		ippsPRNGen_BN(BN(n_TS), numSize_TS, pPrng_TS[thread_id]);
 	z_TS = modPow(n_TS, q_TS, p);
 	//2.Initialize
 	y_TS = z_TS;

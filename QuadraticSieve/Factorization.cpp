@@ -80,7 +80,6 @@ void Factorization::rho_Pollard(BigNumber& N){
 	if (flag){
 		if (N % p != BigNumber::Zero())
 			throw("Error! Wrong rho-pollard result");
-		N /= p;
 		if (p.isPrime(nTraits)){
 			insertDivisor(p);
 			cout << "Rho-Pollard method has found prime factor of " << N << endl;
