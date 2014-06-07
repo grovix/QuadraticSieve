@@ -44,10 +44,55 @@ BigNumber QuadraticSieve::modPow(const BigNumber&a, const BigNumber& k, const Bi
 	return b;
 }
 
+BigNumber QuadraticSieve::modPowMultithreaded(const BigNumber& a, const BigNumber& k, const BigNumber& n, BigNumber& zero, BigNumber& one){
+	int deg = k.BitSize();
+	BigNumber b(one);
+	if (k == zero)
+		return b;
+
+	string s;
+	k.num2hex(s);
+	Ipp32u size = 0;
+	Ipp32u pl = 3;
+	while (s[pl] == '0')
+		++pl;
+	size = s.length() - pl;
+	vector<string> bit(size);
+	for (auto& i : bit){
+		switch (s[pl]){
+		case '0': i = "0000"; break; case '4': i = "0100"; break; case '8': i = "1000"; break; case 'C': i = "1100"; break;
+		case '1': i = "0001"; break; case '5': i = "0101"; break; case '9': i = "1001"; break; case 'D': i = "1101"; break;
+		case '2': i = "0010"; break; case '6': i = "0110"; break; case 'A': i = "1010"; break; case 'E': i = "1110"; break;
+		case '3': i = "0011"; break; case '7': i = "0111"; break; case 'B': i = "1011"; break; case 'F': i = "1111"; break;
+		}
+		++pl;
+	}
+	//Now, we have all bits of k
+	BigNumber F(a);
+	if (bit[size - 1][3] == '1')
+		b = a;
+	for (int i = 1; i < deg; i++){
+		F *= F;
+		F %= n;
+		if (bit[size - 1 - i / 4][3 - i % 4] == '1'){
+			b *= F;
+			b %= n;
+		}
+	}
+	return b;
+}
+
 BigNumber QuadraticSieve::LegendreSymbol(const BigNumber& a, const BigNumber& p){
 
 	BigNumber r(modPow(a, (p - BigNumber::One()) / BigNumber::Two(), p));
 	if (r > BigNumber::One())
+		r -= p;
+	return r;
+}
+
+BigNumber QuadraticSieve::LegendreSymbolMultithreaded(const BigNumber& a, const BigNumber& p, BigNumber& zero, BigNumber& one, BigNumber& two){
+	BigNumber r(modPowMultithreaded(a, (p - one) / two, p,zero,one));
+	if (r > one)
 		r -= p;
 	return r;
 }
@@ -259,7 +304,6 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		i.second = std::vector<Ipp32u>(fbSize+1);
 	}
 
-	BigNumber  D, h2, B2, primeMod, r1, r2, A2, q,InvA, bt,dt;
 
 	//parallel control
 	Ipp32u lenM = 2 * M + 1;
@@ -290,33 +334,41 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 		thread_counter[i] = 0;
 	}
 	
-	BigNumber A, B, C, m_TS, b_TS, ts_1,ts_2,ts_3,ts_4,ts_5,ts_6,_ts_7,ts_8, N_TS;
-	Ipp32u ts_9;
 
-#pragma omp parallel for private(A,B,C,D, h2, B2, primeMod, r1, r2, A2, q,InvA, bt,dt, m_TS, b_TS,ts_1,ts_2,ts_3,ts_4,ts_5,ts_6,_ts_7,ts_8,ts_9, N_TS) schedule(auto)
+
+
+#pragma omp parallel for schedule(auto)
 	for (int thread_id = 0; thread_id < numThreads; thread_id++){
+		BigNumber two(2);
+		BigNumber one(1);
+		BigNumber zero(0);
+		BigNumber minus_one(-1);
+		BigNumber  D, h2, B2, primeMod, r1, r2, A2, q, InvA, bt, dt;
+		BigNumber A, B, C, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, N_TS;
+		Ipp32u ts_9;
 		N_TS = N;
 		while (thread_counter[thread_id] < thread_bound[thread_id]){
 			//generate coefficients
 			ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG[thread_id], ippsPRNGen, pRand[thread_id]);
-			while (!(q.isPrime(nTrials) && LegendreSymbol(N_TS, q) == BigNumber::One())){
+			while (!(q.isPrimeMulitheaded(nTrials,pPrimeG[thread_id],pRand[thread_id]) && LegendreSymbolMultithreaded(N_TS, q,zero,one,two) == one)){
 				ippsPrimeGen_BN(q, maxBitSize, nTrials, pPrimeG[thread_id], ippsPRNGen, pRand[thread_id]);
 			}
-			//cout << "thread_id " << thread_id << " counter = " << thread_counter[thread_id] << endl;
+			cout << "thread_id " << thread_id << " counter = " << thread_counter[thread_id] << endl;
 			//cout << "Switch polynom" << endl;
 			A = q*q;
 
 			//now use Hensel’s Lemma
 			BigNumber B1;
 
-			B1 = Tonelli_Shanks(N_TS, q, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9,thread_id);
+
+			B1 = Tonelli_Shanks(N_TS, q, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9,thread_id,minus_one,one,zero);
 			BigNumber invF(q);
 
-			ippsModInv_BN(BN(BigNumber::Two()*B1 %q), BN(q), BN(invF));
+			ippsModInv_BN(BN(two*B1 %q), BN(q), BN(invF));
 
 			BigNumber t = ((N - B1*B1) / q)*invF % q;
 			B = (B1 + q*t) % A;
-			if (A / B == BigNumber::One())
+			if (A / B == one)
 				B = A - B;
 			C = (B*B - N) / A;
 			BigNumber Q1(N);
@@ -326,13 +378,13 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 			for (Ipp32u i = 1; i < nb; ++i){
 				//primeMod = BigNumber(*it);
 				primeMod = Base[i];
-				A2 = BigNumber::Two()*A;
+				A2 = two*A;
 				InvA = primeMod;
 				ippsModInv_BN(BN(A2 % primeMod), BN(primeMod), BN(InvA));
-				D = Tonelli_Shanks(N_TS, primeMod, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9,thread_id);
+				D = Tonelli_Shanks(N_TS, primeMod, m_TS, b_TS, ts_1, ts_2, ts_3, ts_4, ts_5, ts_6, _ts_7, ts_8, ts_9, thread_id, minus_one, one, zero);
 				bt = B;
-				bt *= BigNumber::MinusOne(); bt *= BigNumber::Two();
-				dt = D; dt *= BigNumber::Two();
+				bt *= minus_one; bt *= two;
+				dt = D; dt *= two;
 				r1 = bt; r2 = bt;
 				r1 += dt; r2 -= dt;
 				r1 *= InvA; r2 *= InvA;
@@ -389,8 +441,8 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 					BigNumber x(xg);
 					Qx = Q(x,A,B,C);
 					Ipp32u res_index = thread_begin_index[thread_id] + thread_counter[thread_id];
-					if (Qx < BigNumber::Zero()){
-						Qx *= BigNumber::MinusOne();
+					if (Qx < zero){
+						Qx *= minus_one;
 					}
 					//Trial division stage
 					if (Qx > BigNumber::Zero()){
@@ -400,13 +452,13 @@ vector<pair<BigNumber, vector<Ipp32u>>> QuadraticSieve::sieving(){
 							BigNumber ttt(*jt);
 							//Silverman point us to one improvement : R = x mod pi must be equals one of two roots
 							//I'll do it later
-							while (Qx % ttt == BigNumber::Zero()){
+							while (Qx % ttt == zero){
 								++deg;
 								Qx /= ttt;
 							}
 							result[res_index].second[ind] = deg;
 						}
-						if (Qx == BigNumber::One()){
+						if (Qx == one){
 							result[res_index].first = (A*x + B) * Q1; //???
 							++thread_counter[thread_id];
 						}
@@ -439,39 +491,40 @@ BigNumber QuadraticSieve::Q(const BigNumber& x, BigNumber& A, BigNumber& B, BigN
 
 //Algorithm return x -> x^2 = a (mod p) or return false
 BigNumber QuadraticSieve::Tonelli_Shanks(const BigNumber& a,const BigNumber& p, BigNumber&m, BigNumber&b,
-	BigNumber& q_TS, BigNumber& n_TS, BigNumber& z_TS, BigNumber&  two_TS, BigNumber& t_TS, BigNumber& y_TS, BigNumber& r_TS, BigNumber& x_TS, Ipp32u e_TS, int thread_id){
+	BigNumber& q_TS, BigNumber& n_TS, BigNumber& z_TS, BigNumber&  two_TS, BigNumber& t_TS, BigNumber& y_TS, BigNumber& r_TS, BigNumber& x_TS, Ipp32u e_TS, int thread_id, 
+	BigNumber& minus_one, BigNumber& one, BigNumber& zero){
 	e_TS = 0;
 	two_TS = BigNumber(2);
-	q_TS = p - BigNumber::One();
+	q_TS = p - one;
 	while (q_TS.IsEven()){
 		++e_TS;
-		q_TS /= BigNumber::Two();
+		q_TS /= two_TS;
 	}
 	//1.Find generator
 
 	ippsPRNGen_BN(BN(n_TS), numSize_TS, pPrng_TS[thread_id]);
-	while (LegendreSymbol(n_TS, p) != BigNumber::MinusOne())
+	while (LegendreSymbolMultithreaded(n_TS, p,zero,one,two_TS) != minus_one)
 		ippsPRNGen_BN(BN(n_TS), numSize_TS, pPrng_TS[thread_id]);
-	z_TS = modPow(n_TS, q_TS, p);
+	z_TS = modPowMultithreaded(n_TS, q_TS, p,zero,one);
 	//2.Initialize
 	y_TS = z_TS;
 	r_TS = e_TS;
-	x_TS = modPow(a, (q_TS - BigNumber::One()) / two_TS, p);
+	x_TS = modPowMultithreaded(a, (q_TS - one) / two_TS, p,zero,one);
 	b = x_TS; b *= x_TS; b %= p; b *= a; b %= p;
 	x_TS = a*x_TS %p;
 	while (true){
-		if (b % p == BigNumber::One()){
+		if (b % p == one){
 			return std::move(x_TS);
 		}
 		//3.Find exponent
-		m = BigNumber::One();
-		while (modPow(b, two_TS.b_power(m), p) != BigNumber::One())
-			m += BigNumber::One();
+		m = one;
+		while (modPowMultithreaded(b, two_TS.b_power(m), p,zero,one) != one)
+			m += one;
 		if (m == r_TS){
-			return BigNumber::Zero();
+			return zero;
 		}
 		//4.Reduce exponent
-		t_TS = modPow(y_TS, two_TS.b_power(r_TS - m - BigNumber::One()), p);
+		t_TS = modPowMultithreaded(y_TS, two_TS.b_power(r_TS - m - one), p,zero,one);
 		y_TS = t_TS;
 		y_TS *= t_TS;
 		y_TS %= p;

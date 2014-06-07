@@ -415,6 +415,17 @@ bool BigNumber::isPrime(int nTrials){
 	return res;
 }
 
+bool BigNumber::isPrimeMulitheaded(int nTrials, IppsPrimeState* pPrimeG, IppsPRNGState* pRand){
+	Ipp32u result;
+	bool res;
+	ippsPrimeTest_BN(BN(*this), nTrials, &result, pPrimeG, ippsPRNGen, pRand);
+	if (result == IPP_IS_PRIME)
+		res = true;
+	else
+		res = false;
+	return res;
+}
+
 float BigNumber::b_ln(){
 
 	IppsBigNumSGN sgn;
