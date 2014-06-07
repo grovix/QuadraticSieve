@@ -71,7 +71,6 @@ public:
 	friend ostream& operator << (ostream& os, const BigNumber& a);
 	//my modifiñations
 	bool isPrime(int nTrials);
-	bool isPrimeMulitheaded(int nTrials, IppsPrimeState* pPrimeG, IppsPRNGState* pRand);
 	float b_ln();
 	float b_log2();
 	BigNumber b_sqrt();

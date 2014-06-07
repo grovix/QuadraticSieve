@@ -16,8 +16,8 @@ public:
 	std::pair<BigNumber, BigNumber> doFactorization();
 	vPair sieving();
 	BigNumber Tonelli_Shanks(const BigNumber& a, const BigNumber& p, BigNumber&m, BigNumber&b,
-		BigNumber& q_TS, BigNumber& n_TS, BigNumber& z_TS, BigNumber&  two_TS, BigNumber& t_TS, BigNumber& y_TS, BigNumber& r_TS, BigNumber& x_TS,
-		Ipp32u e_TS, int thread_id, BigNumber& minus_one, BigNumber& one, BigNumber& zero);
+		BigNumber& q_TS, BigNumber& n_TS, BigNumber& z_TS, BigNumber&  two_TS, BigNumber& t_TS, BigNumber& y_TS, BigNumber& r_TS, BigNumber& x_TS, 
+		Ipp32u e_TS, int thread_id);
 	BigNumber Q(const BigNumber& x, BigNumber& A, BigNumber& B, BigNumber& C);
 	int nTrials = 10;
 	vector<unsigned int> getSparseMatrix(vPair& v);
@@ -26,8 +26,6 @@ public:
 	static ofstream out;
 	void init();
 	int numSize_TS = 10;  //What size "n" should be?
-	BigNumber modPowMultithreaded(const BigNumber& a, const BigNumber& k, const BigNumber& n, BigNumber& zero, BigNumber& one);
-	BigNumber LegendreSymbolMultithreaded(const BigNumber& a, const BigNumber& p, BigNumber& zero, BigNumber& one, BigNumber& two);
 private:
 	BigNumber N;
 	std::vector<BigNumber> Base;
