@@ -8,7 +8,7 @@ public:
 	Wiedemann(const SparseMatrix& a);
 	vector<bool> getSolution();
 	vector<bool> getRandomVector();
-	uInt delta = 5;
+	uInt delta = 50;
 	bool vecMultiply(vector<bool>& a, vector<bool>& b);
 	vector<bool> vecSum(vector<bool>& a, vector<bool>& b);
 	vector<bool> Berlekamp_Massey(vector<bool>& a);

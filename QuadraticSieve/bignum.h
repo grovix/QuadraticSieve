@@ -1,5 +1,6 @@
 #if !defined _BIGNUMBER_H_
 #define _BIGNUMBER_H_
+#include <ipp.h>
 #include <ippcp.h>
 #include <iostream>
 #include <vector>
@@ -64,7 +65,6 @@ public:
 	int LSB() const;
 	int BitSize() const { return MSB() + 1; }
 	int DwordSize() const { return (BitSize() + 31) >> 5; }
-	friend int Bit(const vector<Ipp32u>& v, int n);
 	// conversion and output
 	void num2hex(string& s) const; // convert to hex string
 	void num2vec(vector<Ipp32u>& v) const; // convert to 32-bit word vector
@@ -84,6 +84,11 @@ protected:
 	int compare(const BigNumber&) const;
 	IppsBigNumState* m_pBN;
 };
+
+inline int Bit(const vector<Ipp32u>& v, int n)
+{
+	return 0 != (v[n >> 5] & (1 << (n & 0x1F)));
+}
 // convert bit size into 32-bit words
 #define BITSIZE_WORD(n) ((((n)+31)>>5))
 #endif // _BIGNUMBER_H_

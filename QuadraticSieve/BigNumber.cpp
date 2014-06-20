@@ -342,10 +342,7 @@ int BigNumber::MSB() const
 	}
 	return msb;
 }
-int Bit(const vector<Ipp32u>& v, int n)
-{
-	return 0 != (v[n >> 5] & (1 << (n & 0x1F)));
-}
+
 // conversions and output
 //
 void BigNumber::num2vec(vector<Ipp32u>& v) const

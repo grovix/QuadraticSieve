@@ -47,7 +47,7 @@
     <PlatformToolset>Intel C++ Compiler XE 14.0</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <UseIntelIPP>Sequential</UseIntelIPP>
+    <UseIntelIPP>Parallel_Static</UseIntelIPP>
     <UseIntelTBB>true</UseIntelTBB>
     <UseIntelMKL>Parallel</UseIntelMKL>
   </PropertyGroup>
@@ -70,7 +70,7 @@
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PlatformToolset>Intel C++ Compiler XE 14.0</PlatformToolset>
-    <UseIntelIPP>Sequential</UseIntelIPP>
+    <UseIntelIPP>Parallel_Dynamic</UseIntelIPP>
     <UseIntelTBB>true</UseIntelTBB>
     <UseIntelMKL>Parallel</UseIntelMKL>
     <UseILP64Interfaces>true</UseILP64Interfaces>
@@ -130,7 +130,7 @@
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -214,7 +214,7 @@
       <UseIntelOptimizedHeaders>true</UseIntelOptimizedHeaders>
       <Cpp0xSupport>true</Cpp0xSupport>
       <OpenMP>GenerateParallelCode</OpenMP>
-      <UseProcessorExtensions>SSE41</UseProcessorExtensions>
+      <UseProcessorExtensions>SSE42</UseProcessorExtensions>
       <Optimization>Full</Optimization>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <WarningLevel>EnableAllWarnings</WarningLevel>
@@ -223,6 +223,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;ipps.lib;ippcp.lib;ippi.lib;ippcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
@@ -251,9 +252,11 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;ipps.lib;ippcp.lib;ippi.lib;ippcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <ClCompile>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <OpenMP>GenerateParallelCode</OpenMP>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -43,18 +43,19 @@ int main(){
 		tmp *= ten;
 	}
 
-	std::map<BigNumber, Ipp32u> factor = comp.getFactor();
-	cout << "Factorization completed! " << endl<<"time = "<<clock() - start << endl;
-	for (auto& i : factor){
-		cout << i.first;
-		if (i.second > 1)
-			cout << "^" << i.second;
-		cout << endl;
-	}
+	//std::map<BigNumber, Ipp32u> factor = comp.getFactor();
+	//cout << "Factorization completed! " << endl<<"time = "<<clock() - start << endl;
+	//for (auto& i : factor){
+	//	cout << i.first;
+	//	if (i.second > 1)
+	//		cout << "^" << i.second;
+	//	cout << endl;
+	//}
 
-	//QuadraticSieve q(test);
-	//q.doFactorization();
+	QuadraticSieve q(test);
+	q.doFactorization();
 
+	//cout << q.modPow(BigNumber(3), BigNumber(1024), BigNumber(7));
 	cout << "Complete " << clock() - start << endl;
 	ofstream out("TS_log.txt");
 	out << "Complete " << clock() - start << endl;
